@@ -1,0 +1,47 @@
+name: abcdigikids
+description: "A Flutter project for ABCDigiKids with animated login and signup pages."
+publish_to: 'none' 
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  video_player: ^2.9.1  # Updated to the latest stable version (as of now)
+  flutter_image: ^4.0.0
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  firebase_storage: ^12.3.3
+  cloud_firestore: ^5.4.4
+  speech_to_text: ^7.0.0
+  audioplayers: ^6.1.0
+  flutter_tts: ^4.2.2
+  google_fonts: ^6.1.0 
+  animations: ^2.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Include the video asset for the animated background
+  assets:
+    - assets/backgrounds/ 
+    - assets/icons/
+    - assets/profile_placeholder.jpg
+    - assets/learn_colors/
+    - assets/learn_abc/
+    - assets/learn_numbers/
+    - assets/learn_shapes/
+    - assets/music/
+    - assets/assets/music/music.mp3
+    - assets/originals/
+    - assets/shadows/
+    - assets/letters/

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "735950578627",
+    "project_id": "abcdigikids-d5cac",
+    "storage_bucket": "abcdigikids-d5cac.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735950578627:android:87f30467b727315682d376",
+        "android_client_info": {
+          "package_name": "com.example.abcdigikids"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCADIwLA1s-F0JFL6h96igI-CwuXFD_UsA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,50 @@
+plugins {
+    id "com.android.application"
+    // START: FlutterFire Configuration
+    id 'com.google.gms.google-services'
+    // END: FlutterFire Configuration
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace = "com.example.abcdigikids"
+    compileSdk = flutter.compileSdkVersion // Keep this as is if you are using flutter's compile SDK version
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        // Unique Application ID
+        applicationId = "com.example.abcdigikids"
+        
+        // Set the minimum and target SDK versions
+        minSdkVersion 23   // Manually setting minSdkVersion to 23
+        targetSdkVersion 33 // Update the targetSdkVersion if necessary
+        
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    buildTypes {
+        release {
+            // Use debug keys for now for signing
+            signingConfig = signingConfigs.debug
+        }
+    }
+}
+
+dependencies {
+    // Add your dependencies here if needed
+}
+
+flutter {
+    source = "../.."
+}
