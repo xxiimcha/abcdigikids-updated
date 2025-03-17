@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:confetti/confetti.dart';
 
 class PuzzleGame extends StatefulWidget {
   @override
@@ -7,16 +8,18 @@ class PuzzleGame extends StatefulWidget {
 }
 
 class _PuzzleGameState extends State<PuzzleGame> {
-  List<int> _tiles = List.generate(9, (index) => index); // Numbers 0-8
+  List<int> _tiles = List.generate(9, (index) => index);
   int _emptyTile = 8;
+  late ConfettiController _confettiController;
 
   @override
   void initState() {
     super.initState();
-    _shuffleTiles();
+    _confettiController = ConfettiController(duration: Duration(seconds: 2)); // Initialize first
+    _shuffleTiles(); // Then shuffle tiles
   }
 
-  // Shuffle the tiles at the start of the game
+
   void _shuffleTiles() {
     _tiles.shuffle(Random());
     while (!_isSolvable() || _isSolved()) {
@@ -25,7 +28,6 @@ class _PuzzleGameState extends State<PuzzleGame> {
     setState(() {});
   }
 
-  // Check if the puzzle is solvable
   bool _isSolvable() {
     int inversions = 0;
     for (int i = 0; i < _tiles.length - 1; i++) {
@@ -38,7 +40,6 @@ class _PuzzleGameState extends State<PuzzleGame> {
     return inversions % 2 == 0;
   }
 
-  // Check if the puzzle is already solved
   bool _isSolved() {
     for (int i = 0; i < _tiles.length - 1; i++) {
       if (_tiles[i] != i + 1) {
@@ -48,7 +49,6 @@ class _PuzzleGameState extends State<PuzzleGame> {
     return true;
   }
 
-  // Move a tile if it is adjacent to the empty space
   void _moveTile(int index) {
     int emptyIndex = _tiles.indexOf(0);
     if (_isAdjacent(index, emptyIndex)) {
@@ -57,27 +57,23 @@ class _PuzzleGameState extends State<PuzzleGame> {
         _tiles[index] = 0;
       });
       if (_isSolved()) {
+        _confettiController.play();
         _showWinDialog();
       }
     }
   }
 
-  // Check if two indices are adjacent
   bool _isAdjacent(int index1, int index2) {
-    if ((index1 % 3 == index2 % 3 && (index1 - index2).abs() == 3) ||
-        (index1 ~/ 3 == index2 ~/ 3 && (index1 - index2).abs() == 1)) {
-      return true;
-    }
-    return false;
+    return (index1 % 3 == index2 % 3 && (index1 - index2).abs() == 3) ||
+        (index1 ~/ 3 == index2 ~/ 3 && (index1 - index2).abs() == 1);
   }
 
-  // Show a dialog when the player wins
   void _showWinDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: Text('🎉 Congratulations!'),
+        title: Text('🎉 Congratulations!', textAlign: TextAlign.center),
         content: Text('You solved the puzzle!'),
         actions: [
           TextButton(
@@ -90,7 +86,7 @@ class _PuzzleGameState extends State<PuzzleGame> {
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              Navigator.of(context).pop(); // Go back to the previous screen
+              Navigator.of(context).pop();
             },
             child: Text('Exit'),
           ),
@@ -100,56 +96,155 @@ class _PuzzleGameState extends State<PuzzleGame> {
   }
 
   @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text('Puzzle Game'),
-        backgroundColor: Colors.teal,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 5,
-            mainAxisSpacing: 5,
+        backgroundColor: Colors.teal.withOpacity(0.9),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _shuffleTiles,
           ),
-          itemCount: _tiles.length,
-          itemBuilder: (context, index) {
-            if (_tiles[index] == 0) {
-              return Container(
-                color: Colors.transparent,
-              ); // Empty space
-            } else {
-              return GestureDetector(
-                onTap: () => _moveTile(index),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.blueAccent,
-                    borderRadius: BorderRadius.circular(8.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 5,
-                        offset: Offset(2, 2),
-                      ),
-                    ],
+        ],
+      ),
+      body: Stack(
+        children: [
+          // Background gradient
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.teal.shade300, Colors.blueAccent.shade100],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Arrange the tiles in order!',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  child: Center(
-                    child: Text(
-                      _tiles[index].toString(),
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                ),
+                SizedBox(height: 20),
+
+                // Puzzle Grid
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 10,
+                          offset: Offset(2, 2),
+                        ),
+                      ],
+                    ),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
                       ),
+                      itemCount: _tiles.length,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () => _moveTile(index),
+                          child: AnimatedContainer(
+                            duration: Duration(milliseconds: 200),
+                            decoration: BoxDecoration(
+                              color: _tiles[index] == 0
+                                  ? Colors.transparent
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(8.0),
+                              boxShadow: _tiles[index] == 0
+                                  ? []
+                                  : [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 5,
+                                        offset: Offset(2, 2),
+                                      ),
+                                    ],
+                            ),
+                            child: Center(
+                              child: AnimatedSwitcher(
+                                duration: Duration(milliseconds: 300),
+                                transitionBuilder:
+                                    (Widget child, Animation<double> animation) {
+                                  return ScaleTransition(
+                                      scale: animation, child: child);
+                                },
+                                child: _tiles[index] == 0
+                                    ? SizedBox.shrink()
+                                    : Text(
+                                        _tiles[index].toString(),
+                                        key: ValueKey(_tiles[index]),
+                                        style: TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.teal.shade700,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
-              );
-            }
-          },
-        ),
+
+                SizedBox(height: 20),
+
+                ElevatedButton(
+                  onPressed: _shuffleTiles,
+                  child: Text('Restart Game'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                    textStyle:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Confetti celebration effect
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirection: -pi / 2,
+              maxBlastForce: 10,
+              minBlastForce: 5,
+              emissionFrequency: 0.02,
+              numberOfParticles: 20,
+              gravity: 0.1,
+            ),
+          ),
+        ],
       ),
     );
   }
