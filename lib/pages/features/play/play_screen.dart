@@ -70,14 +70,14 @@ class PlayScreen extends StatelessWidget {
                   },
                 ),
                 // Matching Game Card
-                GameCard(
-                  title: 'Matching Game',
-                  icon: Icons.drag_indicator,
-                  color: Colors.teal,
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRoutes.matchingGameSelection);
-                  },
-                ),
+                //GameCard(
+                 // title: 'Matching Game',
+                  //icon: Icons.drag_indicator,
+                  //color: Colors.teal,
+                  //onTap: () {
+                    //Navigator.pushNamed(context, AppRoutes.matchingGameSelection);
+                  //},
+                // ),
               ],
             ),
           ),
