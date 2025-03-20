@@ -1,0 +1,2 @@
+F:/Commissions/abcdigikids/android/app/.cxx/RelWithDebInfo/676l3u50/armeabi-v7a/CMakeFiles/edit_cache.dir
+F:/Commissions/abcdigikids/android/app/.cxx/RelWithDebInfo/676l3u50/armeabi-v7a/CMakeFiles/rebuild_cache.dir
