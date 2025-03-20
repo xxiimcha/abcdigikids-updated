@@ -120,6 +120,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _buildActionButton(Icons.videogame_asset, "Play", Colors.orangeAccent, 0),
         _buildActionButton(Icons.mic, "Talk", Colors.teal, 1),
         _buildActionButton(Icons.menu_book, "Learn", Colors.blue, 2),
+        _buildActionButton(Icons.auto_stories, "Storytelling", Colors.purple, 3), // New Storytelling button
       ],
     );
   }
