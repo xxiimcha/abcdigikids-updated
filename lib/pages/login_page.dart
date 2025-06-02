@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 import 'signup_page.dart';
@@ -19,6 +20,50 @@ class _LoginPageState extends State<LoginPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool _isLoading = false;
+  bool _isMusicOn = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMusicSetting();
+  }
+
+  Future<void> _loadMusicSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isMusicOn = prefs.getBool('music') ?? true;
+    });
+  }
+
+  Future<void> _toggleMusicSetting(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('music', value);
+    setState(() {
+      _isMusicOn = value;
+    });
+  }
+
+  void _showSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Settings"),
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text("Background Music"),
+            Switch(
+              value: _isMusicOn,
+              onChanged: (value) {
+                _toggleMusicSetting(value);
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _login() async {
     String email = emailController.text.trim();
@@ -34,16 +79,12 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      print('Attempting to log in with email: $email');
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-
-      print('User logged in with UID: ${userCredential.user?.uid}');
       _checkForProfiles(userCredential.user?.uid);
     } catch (e) {
-      print('Error during login: $e');
       _showError('Invalid email or password');
     } finally {
       setState(() {
@@ -59,27 +100,23 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
-      print('Checking for profiles for user ID: $userId');
       QuerySnapshot profileSnapshot = await _firestore
           .collection('app_profiles')
           .where('userId', isEqualTo: userId)
           .get();
 
       if (profileSnapshot.docs.isNotEmpty) {
-        print('Profiles found for user ID: $userId');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => ProfileSelectionPage()),
         );
       } else {
-        print('No profiles found for user ID: $userId');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => CreateProfilePage()),
         );
       }
     } catch (e) {
-      print('Error checking for profiles: $e');
       _showError('Error checking profiles. Please try again.');
     }
   }
@@ -98,17 +135,27 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background GIF
           Positioned.fill(
             child: Image.asset(
               'assets/backgrounds/background.gif',
               fit: BoxFit.cover,
             ),
           ),
-          // Semi-transparent overlay
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.5), // Soft overlay for readability
+              color: Colors.black.withOpacity(0.5),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  icon: Icon(Icons.settings, color: Colors.white),
+                  onPressed: _showSettingsDialog,
+                ),
+              ),
             ),
           ),
           Center(
@@ -131,7 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                   Material(
                     elevation: 8,
                     borderRadius: BorderRadius.circular(20),
-                    color: Colors.white.withOpacity(0.15), // Glassmorphism effect
+                    color: Colors.white.withOpacity(0.15),
                     child: Container(
                       padding: EdgeInsets.all(24),
                       decoration: BoxDecoration(

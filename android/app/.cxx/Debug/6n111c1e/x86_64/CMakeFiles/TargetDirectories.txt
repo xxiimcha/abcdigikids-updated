@@ -1,0 +1,2 @@
+F:/Commissions/abcdigikids/android/app/.cxx/Debug/6n111c1e/x86_64/CMakeFiles/edit_cache.dir
+F:/Commissions/abcdigikids/android/app/.cxx/Debug/6n111c1e/x86_64/CMakeFiles/rebuild_cache.dir
