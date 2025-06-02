@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/bottom_navbar.dart'; // Adjust the import path for your BottomNavBar widget
+import '../../../widgets/settings_button.dart'; // Ensure you have this widget
 
 class ShapesPage extends StatefulWidget {
   @override
@@ -12,44 +12,36 @@ class _ShapesPageState extends State<ShapesPage> {
     'assets/learn_shapes/square.png',
     'assets/learn_shapes/triangle.png',
     'assets/learn_shapes/rectangle.png',
-    // Add more image paths as needed
+    // Add more shapes if needed
   ];
 
   final PageController _pageController = PageController();
   int _currentIndex = 0;
 
-  // Update index when the user swipes to another page
   void _onPageChanged(int index) {
     setState(() {
       _currentIndex = index;
     });
   }
 
-  // Navigate to the next flashcard
   void _nextCard() {
     if (_currentIndex < imagePaths.length - 1) {
       _pageController.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+    } else {
+      _pageController.animateToPage(0, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
     }
   }
 
-  // Navigate to the previous flashcard
   void _previousCard() {
     if (_currentIndex > 0) {
       _pageController.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+    } else {
+      _pageController.animateToPage(imagePaths.length - 1, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
     }
   }
 
-  // Handle bottom nav bar taps
-  void _onBottomNavTapped(int index) {
-    // Handle navigation based on the selected bottom navigation bar item
-    setState(() {
-      _currentIndex = index;
-      if (index == 0) {
-        Navigator.pushNamed(context, '/play'); // Navigate to the Play page
-      } else if (index == 2) {
-        Navigator.pushNamed(context, '/learn'); // Navigate to the Learn page
-      }
-    });
+  String _getShapeName(String path) {
+    return path.split('/').last.split('.').first;
   }
 
   @override
@@ -60,18 +52,35 @@ class _ShapesPageState extends State<ShapesPage> {
           // Background image
           Positioned.fill(
             child: Image.asset(
-              'assets/backgrounds/background.gif', // Path to your background image
+              'assets/backgrounds/background.gif',
               fit: BoxFit.cover,
             ),
           ),
-          // Semi-transparent overlay
+          // Overlay
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.5), // Adjust the opacity for readability
+              color: Colors.black.withOpacity(0.5),
             ),
           ),
+
+          // Top controls
+          Positioned(
+            top: 30,
+            left: 16,
+            child: IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.white, size: 30),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          Positioned(
+            top: 30,
+            right: 16,
+            child: SettingsButton(),
+          ),
+
           Column(
             children: [
+              SizedBox(height: 80),
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
@@ -85,7 +94,7 @@ class _ShapesPageState extends State<ShapesPage> {
                         children: [
                           Expanded(
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20.0), // Rounded corners for the image
+                              borderRadius: BorderRadius.circular(20.0),
                               child: Image.asset(
                                 imagePaths[index],
                                 fit: BoxFit.cover,
@@ -93,6 +102,14 @@ class _ShapesPageState extends State<ShapesPage> {
                             ),
                           ),
                           SizedBox(height: 20),
+                          Text(
+                            _getShapeName(imagePaths[index]).toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -131,17 +148,13 @@ class _ShapesPageState extends State<ShapesPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Handle microphone/talk action
+          // TODO: Add TTS or audio here
         },
         child: Icon(Icons.mic, size: 30, color: Colors.white),
         backgroundColor: Colors.blueAccent,
         elevation: 5,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: _onBottomNavTapped,
-      ),
     );
   }
 }

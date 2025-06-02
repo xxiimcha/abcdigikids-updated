@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/routes.dart';
+import '../../../widgets/settings_button.dart'; // Add this import
 
 class PlayScreen extends StatelessWidget {
   @override
@@ -34,6 +35,12 @@ class PlayScreen extends StatelessWidget {
                   Navigator.pop(context);
                 },
               ),
+            ),
+            // Settings Button
+            Positioned(
+              top: 16,
+              right: 16,
+              child: SettingsButton(),
             ),
             // Game Cards
             Padding(
@@ -84,7 +91,6 @@ class PlayScreen extends StatelessWidget {
     );
   }
 }
-
 
 // Reusable Game Card Widget
 class GameCard extends StatelessWidget {

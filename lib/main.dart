@@ -1,16 +1,22 @@
+import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'package:flutter/material.dart';
+import 'pages/utils/routes.dart';
 import 'pages/login_page.dart';
-import 'pages/utils/routes.dart'; // Import routes
-import 'services/music.service.dart'; // Import the music service
+import 'package:provider/provider.dart';
+import 'pages/utils/settings.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(ABCDigiKidsApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => SettingsProvider(),
+      child: ABCDigiKidsApp(),
+    ),
+  );
 }
 
 class ABCDigiKidsApp extends StatefulWidget {
@@ -19,28 +25,25 @@ class ABCDigiKidsApp extends StatefulWidget {
 }
 
 class _ABCDigiKidsAppState extends State<ABCDigiKidsApp> with WidgetsBindingObserver {
-  final MusicService _musicService = MusicService();
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this); // Listen to lifecycle changes
-    _musicService.playBackgroundMusic(); // Start playing background music when app starts
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _musicService.stopMusic(); // Stop the music when the app is disposed
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
     if (state == AppLifecycleState.paused) {
-      _musicService.pauseMusic(); // Pause music when app goes to background
+      settingsProvider.pauseMusic();
     } else if (state == AppLifecycleState.resumed) {
-      _musicService.playBackgroundMusic(); // Resume music when app returns to foreground
+      settingsProvider.resumeMusic();
     }
   }
 
@@ -48,28 +51,35 @@ class _ABCDigiKidsAppState extends State<ABCDigiKidsApp> with WidgetsBindingObse
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ABCDigiKids',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      initialRoute: AppRoutes.login, // Set initial route to LoginPage
-      routes: AppRoutes.routes, // Use the routes from routes.dart
-      onGenerateRoute: _onGenerateRoute, // Handle custom route logic for music
+      theme: ThemeData(primarySwatch: Colors.blue),
+      initialRoute: AppRoutes.login,
+      onGenerateRoute: _onGenerateRoute,
     );
   }
 
-  // Custom method to handle route changes and stop/play music accordingly
   Route _onGenerateRoute(RouteSettings settings) {
-    switch (settings.name) {
-      case AppRoutes.login:
-      case AppRoutes.signup:
-      case AppRoutes.profileSelection:
-        _musicService.stopMusic(); // Stop music on login, signup, and profile selection pages
-        break;
-      default:
-        _musicService.playBackgroundMusic(); // Play music on all other pages
+    final routeName = settings.name ?? '';
+    final routeBuilder = AppRoutes.routes[routeName];
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+
+    const mutedRoutes = {
+      AppRoutes.login,
+      AppRoutes.signup,
+      AppRoutes.profileSelection,
+    };
+
+    if (mutedRoutes.contains(routeName)) {
+      settingsProvider.stopMusic();
+    } else {
+      if (settingsProvider.isMusicOn) {
+        settingsProvider.resumeMusic();
+      }
     }
-    return MaterialPageRoute(
-      builder: (context) => AppRoutes.routes[settings.name]!(context),
-    );
+
+    if (routeBuilder != null) {
+      return MaterialPageRoute(builder: routeBuilder, settings: settings);
+    }
+
+    return MaterialPageRoute(builder: (context) => LoginPage());
   }
 }

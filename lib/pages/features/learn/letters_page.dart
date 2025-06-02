@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/bottom_navbar.dart'; // Adjust the import path for your BottomNavBar widget
+import '../../../widgets/settings_button.dart'; // ✅ Import the SettingsButton
 
 class LettersPage extends StatefulWidget {
   @override
@@ -8,44 +8,29 @@ class LettersPage extends StatefulWidget {
 
 class _LettersPageState extends State<LettersPage> {
   final List<String> imagePaths = List.generate(
-    26, // Total number of letters in the alphabet
+    26,
     (index) => 'assets/learn_abc/${String.fromCharCode(65 + index)}.png',
   );
 
   final PageController _pageController = PageController();
   int _currentIndex = 0;
 
-  // Update index when the user swipes to another page
   void _onPageChanged(int index) {
     setState(() {
       _currentIndex = index;
     });
   }
 
-  // Navigate to the next flashcard
   void _nextCard() {
     if (_currentIndex < imagePaths.length - 1) {
       _pageController.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
     }
   }
 
-  // Navigate to the previous flashcard
   void _previousCard() {
     if (_currentIndex > 0) {
       _pageController.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
     }
-  }
-
-  // Handle bottom nav bar taps
-  void _onBottomNavTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-      if (index == 0) {
-        Navigator.pushNamed(context, '/play'); // Navigate to the Play page
-      } else if (index == 2) {
-        Navigator.pushNamed(context, '/learn'); // Navigate to the Learn page
-      }
-    });
   }
 
   @override
@@ -56,18 +41,34 @@ class _LettersPageState extends State<LettersPage> {
           // Background image
           Positioned.fill(
             child: Image.asset(
-              'assets/backgrounds/background.gif', // Path to your background image
+              'assets/backgrounds/background.gif',
               fit: BoxFit.cover,
             ),
           ),
-          // Semi-transparent overlay
+          // Overlay
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.5), // Adjust the opacity for readability
+              color: Colors.black.withOpacity(0.5),
             ),
           ),
+          // Top buttons
+          Positioned(
+            top: 30,
+            left: 16,
+            child: IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.white, size: 30),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          Positioned(
+            top: 30,
+            right: 16,
+            child: SettingsButton(),
+          ),
+          // Flashcard swiper
           Column(
             children: [
+              SizedBox(height: 80), // Padding below top buttons
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
@@ -75,13 +76,13 @@ class _LettersPageState extends State<LettersPage> {
                   itemCount: imagePaths.length,
                   itemBuilder: (context, index) {
                     return Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(20.0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Expanded(
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20.0), // Rounded corners for the image
+                              borderRadius: BorderRadius.circular(20.0),
                               child: Image.asset(
                                 imagePaths[index],
                                 fit: BoxFit.cover,
@@ -95,6 +96,7 @@ class _LettersPageState extends State<LettersPage> {
                   },
                 ),
               ),
+              // Navigation buttons
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20.0),
                 child: Row(
@@ -127,17 +129,13 @@ class _LettersPageState extends State<LettersPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Handle microphone/talk action
+          // TODO: Handle microphone or voice functionality
         },
         child: Icon(Icons.mic, size: 30, color: Colors.white),
         backgroundColor: Colors.blueAccent,
         elevation: 5,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: _onBottomNavTapped,
-      ),
     );
   }
 }

@@ -1,43 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/music.service.dart';
 
-class SettingsUtil {
-  static const String _musicKey = 'music';
+class SettingsProvider extends ChangeNotifier {
+  bool _isMusicOn = true;
+  final MusicService _musicService = MusicService();
 
-  static Future<bool> isMusicOn() async {
+  bool get isMusicOn => _isMusicOn;
+
+  SettingsProvider() {
+    _loadMusicSetting();
+  }
+
+  Future<void> _loadMusicSetting() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_musicKey) ?? true;
+    _isMusicOn = prefs.getBool('music') ?? true;
+    if (_isMusicOn) {
+      _musicService.playBackgroundMusic();
+    }
+    notifyListeners();
   }
 
-  static Future<void> setMusic(bool value) async {
+  Future<void> toggleMusic(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_musicKey, value);
+    await prefs.setBool('music', value);
+    _isMusicOn = value;
+    if (_isMusicOn) {
+      _musicService.playBackgroundMusic();
+    } else {
+      _musicService.stopMusic();
+    }
+    notifyListeners();
   }
 
-  static Future<void> showSettingsDialog(BuildContext context, VoidCallback onToggle) async {
-    bool current = await isMusicOn();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Settings"),
-        content: StatefulBuilder(
-          builder: (context, setState) => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("Background Music"),
-              Switch(
-                value: current,
-                onChanged: (value) async {
-                  await setMusic(value);
-                  setState(() => current = value);
-                  onToggle();
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void pauseMusic() => _musicService.pauseMusic();
+  void resumeMusic() {
+    if (_isMusicOn) _musicService.playBackgroundMusic();
   }
+
+  void stopMusic() => _musicService.stopMusic();
 }

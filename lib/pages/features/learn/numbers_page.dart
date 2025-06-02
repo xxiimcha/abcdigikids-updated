@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/bottom_navbar.dart'; // Adjust the import path for your BottomNavBar widget
+import '../../../widgets/settings_button.dart'; // ✅ Import settings button widget
 
 class NumbersPage extends StatefulWidget {
   @override
@@ -12,44 +12,32 @@ class _NumbersPageState extends State<NumbersPage> {
     'assets/learn_numbers/2.png',
     'assets/learn_numbers/3.png',
     'assets/learn_numbers/4.png',
-    // Add more image paths as needed
+    // Add more image paths if needed
   ];
 
   final PageController _pageController = PageController();
   int _currentIndex = 0;
 
-  // Update index when the user swipes to another page
   void _onPageChanged(int index) {
     setState(() {
       _currentIndex = index;
     });
   }
 
-  // Navigate to the next flashcard
   void _nextCard() {
     if (_currentIndex < imagePaths.length - 1) {
       _pageController.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+    } else {
+      _pageController.animateToPage(0, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
     }
   }
 
-  // Navigate to the previous flashcard
   void _previousCard() {
     if (_currentIndex > 0) {
       _pageController.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+    } else {
+      _pageController.animateToPage(imagePaths.length - 1, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
     }
-  }
-
-  // Handle bottom nav bar taps
-  void _onBottomNavTapped(int index) {
-    // Handle navigation based on the selected bottom navigation bar item
-    setState(() {
-      _currentIndex = index;
-      if (index == 0) {
-        Navigator.pushNamed(context, '/play'); // Navigate to the Play page
-      } else if (index == 2) {
-        Navigator.pushNamed(context, '/learn'); // Navigate to the Learn page
-      }
-    });
   }
 
   @override
@@ -64,14 +52,32 @@ class _NumbersPageState extends State<NumbersPage> {
               fit: BoxFit.cover,
             ),
           ),
-          // Semi-transparent overlay
+          // Overlay
           Positioned.fill(
             child: Container(
               color: Colors.black.withOpacity(0.5),
             ),
           ),
+
+          // Back and Settings buttons
+          Positioned(
+            top: 30,
+            left: 16,
+            child: IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.white, size: 30),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          Positioned(
+            top: 30,
+            right: 16,
+            child: SettingsButton(),
+          ),
+
+          // Main content
           Column(
             children: [
+              SizedBox(height: 80),
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
@@ -93,6 +99,14 @@ class _NumbersPageState extends State<NumbersPage> {
                             ),
                           ),
                           SizedBox(height: 20),
+                          Text(
+                            'Number ${index + 1}',
+                            style: TextStyle(
+                              fontSize: 28,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -131,17 +145,13 @@ class _NumbersPageState extends State<NumbersPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Handle microphone/talk action
+          // TODO: Add speech or sound logic here
         },
         child: Icon(Icons.mic, size: 30, color: Colors.white),
         backgroundColor: Colors.blueAccent,
         elevation: 5,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: _onBottomNavTapped,
-      ),
     );
   }
 }

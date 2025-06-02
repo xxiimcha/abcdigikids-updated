@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:math';
+import '../../../widgets/settings_button.dart'; // ✅ Import settings button
 
 class MemoryMatchGame extends StatefulWidget {
   @override
@@ -8,7 +9,6 @@ class MemoryMatchGame extends StatefulWidget {
 }
 
 class _MemoryMatchGameState extends State<MemoryMatchGame> {
-  // Card content (emojis representing different fruits)
   final List<String> _cardContents = [
     '🍎', '🍎', '🍌', '🍌', '🍇', '🍇',
     '🍓', '🍓', '🍒', '🍒', '🥝', '🥝'
@@ -97,6 +97,7 @@ class _MemoryMatchGameState extends State<MemoryMatchGame> {
             icon: Icon(Icons.refresh),
             onPressed: _shuffleCards,
           ),
+          SettingsButton(), // ✅ Add Settings button here
         ],
       ),
       body: Stack(
@@ -147,7 +148,7 @@ class _MemoryMatchGameState extends State<MemoryMatchGame> {
                               child: _flipped[index] || _matched[index]
                                   ? Text(
                                       _cardContents[index],
-                                      key: ValueKey(_cardContents[index]),
+                                      key: ValueKey(_cardContents[index] + index.toString()),
                                       style: TextStyle(fontSize: 36, color: Colors.black),
                                     )
                                   : Icon(Icons.help_outline, color: Colors.white, size: 36),
@@ -175,7 +176,7 @@ class _MemoryMatchGameState extends State<MemoryMatchGame> {
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
               confettiController: _confettiController,
-              blastDirection: -pi / 2, // Upwards
+              blastDirection: -pi / 2,
               maxBlastForce: 10,
               minBlastForce: 5,
               emissionFrequency: 0.02,

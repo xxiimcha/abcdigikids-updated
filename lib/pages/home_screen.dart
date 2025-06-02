@@ -4,6 +4,7 @@ import 'package:animations/animations.dart'; // For smooth transitions
 import 'utils/routes.dart'; // Import routes
 import '../pages/features/learn/learn_screen.dart'; 
 import '../pages/features/play/play_screen.dart'; 
+import '../pages/features/speak/talk_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String profileName;
@@ -24,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.initState();
     _pages = [
       _buildHomeScreen(),
-      Center(child: Text('Talk Screen', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold))),
+      TalkScreen(),
       LearnScreen(),
     ];
 

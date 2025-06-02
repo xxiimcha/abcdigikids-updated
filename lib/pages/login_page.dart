@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'utils/settings.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 import 'signup_page.dart';
@@ -20,30 +21,9 @@ class _LoginPageState extends State<LoginPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool _isLoading = false;
-  bool _isMusicOn = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadMusicSetting();
-  }
-
-  Future<void> _loadMusicSetting() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _isMusicOn = prefs.getBool('music') ?? true;
-    });
-  }
-
-  Future<void> _toggleMusicSetting(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('music', value);
-    setState(() {
-      _isMusicOn = value;
-    });
-  }
 
   void _showSettingsDialog() {
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -52,12 +32,14 @@ class _LoginPageState extends State<LoginPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text("Background Music"),
-            Switch(
-              value: _isMusicOn,
-              onChanged: (value) {
-                _toggleMusicSetting(value);
-                Navigator.of(context).pop();
-              },
+            Consumer<SettingsProvider>(
+              builder: (context, provider, _) => Switch(
+                value: provider.isMusicOn,
+                onChanged: (value) {
+                  provider.toggleMusic(value);
+                  Navigator.of(context).pop();
+                },
+              ),
             ),
           ],
         ),

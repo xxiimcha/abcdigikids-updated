@@ -43,4 +43,11 @@ class AppRoutes {
     matchingGame: (context) => MatchingGame(category: 'Others'), // Pass category as a named parameter
     matchingGameSelection: (context) => CategorySelectionScreen(), // Add the matching game screen here
   };
+  
+  static const Set<String> mutedRoutes = {
+    login,
+    signup,
+    profileSelection,
+  };
+
 }

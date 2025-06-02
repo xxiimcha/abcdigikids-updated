@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_selection_page.dart';
+import '../widgets/settings_button.dart';
 
 class CreateProfilePage extends StatefulWidget {
   @override
@@ -24,21 +25,17 @@ class _CreateProfilePageState extends State<CreateProfilePage> with SingleTicker
   @override
   void initState() {
     super.initState();
-
-    // Adjusted bounds to prevent exceeding [0,1] range
     _avatarController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 800),
-      lowerBound: 0.95,  // Minimum scale slightly below 1
-      upperBound: 1.0,   // Maximum scale at 1 to prevent overflow
+      lowerBound: 0.95,
+      upperBound: 1.0,
     );
-
     _bounceAnimation = CurvedAnimation(
       parent: _avatarController,
       curve: Curves.easeInOut,
       reverseCurve: Curves.easeInOut,
     );
-
     _avatarController.repeat(reverse: true);
   }
 
@@ -54,7 +51,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> with SingleTicker
     String pin = pinController.text.trim();
     User? user = _auth.currentUser;
 
-    if (name.isEmpty || birthday.isEmpty || (pin.isEmpty && _pinRequired)) {
+    if (name.isEmpty || birthday.isEmpty || (_pinRequired && pin.isEmpty)) {
       _showError('Please fill in all required fields');
       return;
     }
@@ -105,25 +102,40 @@ class _CreateProfilePageState extends State<CreateProfilePage> with SingleTicker
     return Scaffold(
       body: Stack(
         children: [
-          // Background GIF
           Positioned.fill(
             child: Image.asset(
               'assets/backgrounds/background.gif',
               fit: BoxFit.cover,
             ),
           ),
-          // Semi-transparent overlay
           Positioned.fill(
             child: Container(color: Colors.blueAccent.withOpacity(0.5)),
           ),
-          // Profile creation form
+          // Back button and Settings button in SafeArea
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // ⬅️ Back button
+                  IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  SettingsButton(),
+                ],
+              ),
+            ),
+          ),
           Center(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Fun Header
                   Text(
                     'Let’s Create Your Profile!',
                     style: TextStyle(
@@ -135,12 +147,11 @@ class _CreateProfilePageState extends State<CreateProfilePage> with SingleTicker
                     ),
                   ),
                   SizedBox(height: 20),
-                  // Avatar Selection with Bounce Animation
                   ScaleTransition(
                     scale: _bounceAnimation,
                     child: GestureDetector(
                       onTap: () {
-                        // Future: Open Avatar Selection
+                        // Future avatar picker
                       },
                       child: Container(
                         width: 120,
@@ -164,7 +175,6 @@ class _CreateProfilePageState extends State<CreateProfilePage> with SingleTicker
                     ),
                   ),
                   SizedBox(height: 20),
-                  // Form Container
                   Material(
                     elevation: 10,
                     borderRadius: BorderRadius.circular(20),
@@ -182,7 +192,6 @@ class _CreateProfilePageState extends State<CreateProfilePage> with SingleTicker
                             keyboardType: TextInputType.datetime,
                           ),
                           SizedBox(height: 15),
-                          // PIN Toggle with Animated Slide-in Effect
                           AnimatedSwitcher(
                             duration: Duration(milliseconds: 300),
                             child: Column(
@@ -203,14 +212,18 @@ class _CreateProfilePageState extends State<CreateProfilePage> with SingleTicker
                                 if (_pinRequired)
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 10),
-                                    child: _buildRoundedTextField(pinController, 'Enter PIN', Icons.lock,
-                                        obscureText: true, keyboardType: TextInputType.number),
+                                    child: _buildRoundedTextField(
+                                      pinController,
+                                      'Enter PIN',
+                                      Icons.lock,
+                                      obscureText: true,
+                                      keyboardType: TextInputType.number,
+                                    ),
                                   ),
                               ],
                             ),
                           ),
                           SizedBox(height: 20),
-                          // Create Profile Button with Glow Effect
                           GestureDetector(
                             onTap: _createProfile,
                             child: AnimatedContainer(

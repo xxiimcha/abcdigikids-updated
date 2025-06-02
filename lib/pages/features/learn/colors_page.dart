@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import '../../utils/bottom_navbar.dart'; // Adjust the import path for your BottomNavBar widget
+import '../../../widgets/settings_button.dart'; // ✅ Add this import
 
 class ColorsPage extends StatefulWidget {
   @override
@@ -9,7 +9,7 @@ class ColorsPage extends StatefulWidget {
 
 class _ColorsPageState extends State<ColorsPage> {
   final FlutterTts _flutterTts = FlutterTts();
-  
+
   final List<String> imagePaths = [
     'assets/learn_colors/red.png',
     'assets/learn_colors/blue.png',
@@ -19,14 +19,11 @@ class _ColorsPageState extends State<ColorsPage> {
 
   final PageController _pageController = PageController();
   int _currentIndex = 0;
-  int _bottomNavIndex = 1; // Separate index for BottomNavigationBar
 
-  // Function to extract the color name from the image path
   String _getColorName(String imagePath) {
-    return imagePath.split('/').last.split('.').first; // Extracts "red" from "red.png"
+    return imagePath.split('/').last.split('.').first;
   }
 
-  // Function to read the color name aloud
   Future<void> _speakColorName() async {
     String colorName = _getColorName(imagePaths[_currentIndex]);
     await _flutterTts.speak(colorName);
@@ -39,7 +36,6 @@ class _ColorsPageState extends State<ColorsPage> {
     super.dispose();
   }
 
-  // Handle page change for looping effect
   void _onPageChanged(int index) {
     setState(() {
       _currentIndex = index;
@@ -47,22 +43,18 @@ class _ColorsPageState extends State<ColorsPage> {
     _speakColorName();
   }
 
-  // Navigate to the next flashcard with smooth looping
   void _nextCard() {
     if (_currentIndex < imagePaths.length - 1) {
       _pageController.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
     } else {
-      // Smooth transition to first page
       _pageController.animateToPage(0, duration: Duration(milliseconds: 500), curve: Curves.easeOut);
     }
   }
 
-  // Navigate to the previous flashcard with smooth looping
   void _previousCard() {
     if (_currentIndex > 0) {
       _pageController.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
     } else {
-      // Smooth transition to last page
       _pageController.animateToPage(imagePaths.length - 1, duration: Duration(milliseconds: 500), curve: Curves.easeOut);
     }
   }
@@ -72,6 +64,7 @@ class _ColorsPageState extends State<ColorsPage> {
     return Scaffold(
       body: Stack(
         children: [
+          // Background
           Positioned.fill(
             child: Image.asset(
               'assets/backgrounds/background.gif',
@@ -79,12 +72,28 @@ class _ColorsPageState extends State<ColorsPage> {
             ),
           ),
           Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.5),
+            child: Container(color: Colors.black.withOpacity(0.5)),
+          ),
+
+          // Back and Settings buttons
+          Positioned(
+            top: 30,
+            left: 16,
+            child: IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.white, size: 30),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
+          Positioned(
+            top: 30,
+            right: 16,
+            child: SettingsButton(),
+          ),
+
+          // Main Content
           Column(
             children: [
+              SizedBox(height: 80),
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
@@ -108,7 +117,11 @@ class _ColorsPageState extends State<ColorsPage> {
                           SizedBox(height: 20),
                           Text(
                             _getColorName(imagePaths[index]).toUpperCase(),
-                            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white),
+                            style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ],
                       ),
@@ -153,20 +166,6 @@ class _ColorsPageState extends State<ColorsPage> {
         elevation: 5,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _bottomNavIndex, // Separate index for BottomNavigationBar
-        onTap: (index) {
-          setState(() {
-            _bottomNavIndex = index;
-          });
-
-          if (index == 0) {
-            Navigator.pushNamed(context, '/play');
-          } else if (index == 2) {
-            Navigator.pushNamed(context, '/learn');
-          }
-        },
-      ),
     );
   }
 }

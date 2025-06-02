@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../utils/bottom_navbar.dart'; // Import your BottomNavBar widget
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'dart:math';
 
 class TalkScreen extends StatefulWidget {
@@ -9,7 +9,6 @@ class TalkScreen extends StatefulWidget {
 }
 
 class _TalkScreenState extends State<TalkScreen> {
-  int _selectedIndex = 1;
   late stt.SpeechToText _speech;
   bool _isListening = false;
   String _recognizedText = 'Tap the mic and start speaking...';
@@ -21,17 +20,6 @@ class _TalkScreenState extends State<TalkScreen> {
     _speech = stt.SpeechToText();
   }
 
-  // Handle navigation based on tab selection
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      if (index != 1) {
-        Navigator.pop(context); // Pop the current screen
-      }
-    });
-  }
-
-  // Start listening to user's speech
   void _startListening() async {
     bool available = await _speech.initialize(
       onStatus: (status) => print('onStatus: $status'),
@@ -42,43 +30,42 @@ class _TalkScreenState extends State<TalkScreen> {
       _speech.listen(
         onResult: (val) => setState(() {
           _recognizedText = val.recognizedWords;
-          _soundWaveAmplitude = Random().nextDouble() * 30; // Simulate amplitude changes
+          _soundWaveAmplitude = Random().nextDouble() * 30;
         }),
       );
     }
   }
 
-  // Stop listening to user's speech
   void _stopListening() {
     _speech.stop();
     setState(() {
       _isListening = false;
-      _soundWaveAmplitude = 0.0; // Reset soundwave
+      _soundWaveAmplitude = 0.0;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("Talk"),
+        centerTitle: true,
+        backgroundColor: Colors.teal,
+      ),
       body: SafeArea(
         child: Stack(
           children: [
-            // Background image
             Positioned.fill(
               child: Image.asset(
-                'assets/backgrounds/background.gif', // Ensure this path matches your asset structure
+                'assets/backgrounds/background.gif',
                 fit: BoxFit.cover,
               ),
             ),
-
-            // Semi-transparent overlay
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.5), // Adjust opacity as needed
+                color: Colors.black.withOpacity(0.5),
               ),
             ),
-
-            // Centered content
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
@@ -86,7 +73,6 @@ class _TalkScreenState extends State<TalkScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(height: 20),
-                    // Display recognized speech
                     Text(
                       _recognizedText,
                       style: TextStyle(
@@ -95,51 +81,56 @@ class _TalkScreenState extends State<TalkScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: 20), // Space between text and soundwave
-
-                    // Soundwave visual
+                    SizedBox(height: 20),
                     CustomPaint(
                       size: Size(double.infinity, 100),
                       painter: SoundWavePainter(_isListening, _soundWaveAmplitude),
                     ),
-
-                    SizedBox(height: 40), // Space between soundwave and microphone button
-
-                    // Microphone button with gradient background
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [Colors.orange, Colors.yellow],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 10,
-                              spreadRadius: 5,
-                            ),
-                          ],
+                    SizedBox(height: 20),
+                    SizedBox(
+                      height: 300,
+                      width: 300,
+                      child: ModelViewer(
+                        src: 'assets/models/fox.glb',
+                        alt: "3D model of a fox",
+                        ar: false,
+                        autoRotate: true,
+                        cameraControls: true,
+                        backgroundColor: Colors.transparent,
+                      ),
+                    ),
+                    SizedBox(height: 40),
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [Colors.orange, Colors.yellow],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        child: IconButton(
-                          icon: Icon(
-                            _isListening ? Icons.mic_off : Icons.mic,
-                            size: 60,
-                            color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 10,
+                            spreadRadius: 5,
                           ),
-                          onPressed: () {
-                            if (_isListening) {
-                              _stopListening();
-                            } else {
-                              _startListening();
-                            }
-                          },
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          _isListening ? Icons.mic_off : Icons.mic,
+                          size: 60,
+                          color: Colors.white,
                         ),
+                        onPressed: () {
+                          if (_isListening) {
+                            _stopListening();
+                          } else {
+                            _startListening();
+                          }
+                        },
                       ),
                     ),
                   ],
@@ -149,29 +140,10 @@ class _TalkScreenState extends State<TalkScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Handle action for microphone
-          if (_isListening) {
-            _stopListening();
-          } else {
-            _startListening();
-          }
-        },
-        child: Icon(Icons.mic, size: 30, color: Colors.white), // Microphone icon for Talk
-        backgroundColor: Colors.blueAccent,
-        elevation: 5,
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-      ),
     );
   }
 }
 
-// Painter for the soundwave effect
 class SoundWavePainter extends CustomPainter {
   final bool isListening;
   final double amplitude;
@@ -185,7 +157,6 @@ class SoundWavePainter extends CustomPainter {
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
-    // Draw the soundwave
     final path = Path();
     double waveHeight = amplitude;
     double frequency = 0.02;

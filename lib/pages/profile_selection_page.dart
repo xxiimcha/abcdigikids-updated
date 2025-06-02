@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart'; // Import HomeScreen
 import 'create_profile_page.dart'; // Import CreateProfilePage
+import 'utils/settings.dart'; // ✅ Import SettingsButton
+import '../widgets/settings_button.dart'; // Adjust path as needed
 
 class ProfileSelectionPage extends StatefulWidget {
   @override
@@ -20,18 +22,15 @@ class _ProfileSelectionPageState extends State<ProfileSelectionPage> with Single
   @override
   void initState() {
     super.initState();
-
-    // Animation setup
     _controller = AnimationController(vsync: this, duration: Duration(milliseconds: 600));
     _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-
-    _fetchProfiles(); // Fetch profiles after setting up the animation
+    _fetchProfiles();
   }
 
   Future<void> _fetchProfiles() async {
     User? user = _auth.currentUser;
     if (user == null) {
-      _controller.forward(); // Ensure animation runs even if user is null
+      _controller.forward();
       return;
     }
 
@@ -46,14 +45,13 @@ class _ProfileSelectionPageState extends State<ProfileSelectionPage> with Single
         isLoading = false;
       });
 
-      _controller.forward(); // Start fade-in animation after data loads
+      _controller.forward();
     } catch (e) {
       print('Error fetching profiles: $e');
       setState(() {
         isLoading = false;
       });
-
-      _controller.forward(); // Ensure animation still runs even on error
+      _controller.forward();
     }
   }
 
@@ -68,20 +66,27 @@ class _ProfileSelectionPageState extends State<ProfileSelectionPage> with Single
     return Scaffold(
       body: Stack(
         children: [
-          // Background GIF
           Positioned.fill(
             child: Image.asset(
               'assets/backgrounds/background.gif',
               fit: BoxFit.cover,
             ),
           ),
-          // Semi-transparent overlay for better contrast
           Positioned.fill(
             child: Container(
               color: Colors.black.withOpacity(0.5),
             ),
           ),
-          // Profile selection content
+          // ✅ Add reusable settings button
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Align(
+                alignment: Alignment.topRight,
+                child: SettingsButton(),
+              ),
+            ),
+          ),
           Center(
             child: isLoading
                 ? CircularProgressIndicator(color: Colors.white)
@@ -90,14 +95,13 @@ class _ProfileSelectionPageState extends State<ProfileSelectionPage> with Single
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Kid-friendly Title
                         Text(
                           'Wanna Play?',
                           style: TextStyle(
                             color: Colors.yellowAccent,
                             fontSize: 38,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'ComicSans', // Fun font
+                            fontFamily: 'ComicSans',
                             shadows: [
                               Shadow(blurRadius: 5, color: Colors.black54),
                             ],
@@ -115,7 +119,7 @@ class _ProfileSelectionPageState extends State<ProfileSelectionPage> with Single
                             : GridView.builder(
                                 shrinkWrap: true,
                                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2, // Display profiles in a 2-column grid
+                                  crossAxisCount: 2,
                                   crossAxisSpacing: 20,
                                   mainAxisSpacing: 20,
                                 ),
@@ -170,7 +174,6 @@ class _ProfileSelectionPageState extends State<ProfileSelectionPage> with Single
                                 },
                               ),
                         SizedBox(height: 40),
-                        // Animated "Add Profile" Button
                         GestureDetector(
                           onTap: () {
                             Navigator.push(

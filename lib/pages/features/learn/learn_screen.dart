@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../widgets/_pageswipe.dart';
-import 'numbers_page.dart';
-import 'shapes_page.dart';
-import 'letters_page.dart';
-import 'colors_page.dart';
+import '../../../widgets/settings_button.dart';
 
 class LearnScreen extends StatefulWidget {
   @override
@@ -39,13 +36,16 @@ class _LearnScreenState extends State<LearnScreen> with SingleTickerProviderStat
     return WillPopScope(
       onWillPop: () async {
         await _fadeController.reverse();
-        return true;
+        Future.delayed(Duration(milliseconds: 100), () {
+          Navigator.pushReplacementNamed(context, '/home');
+        });
+        return false;
       },
       child: Scaffold(
         body: SafeArea(
           child: Stack(
             children: [
-              // Background image
+              // Background
               Positioned.fill(
                 child: Image.asset(
                   'assets/backgrounds/chalkboard.gif',
@@ -54,11 +54,8 @@ class _LearnScreenState extends State<LearnScreen> with SingleTickerProviderStat
                   height: screenHeight,
                 ),
               ),
-              // Semi-transparent overlay
               Positioned.fill(
-                child: Container(
-                  color: Colors.black.withOpacity(0.5),
-                ),
+                child: Container(color: Colors.black.withOpacity(0.5)),
               ),
               // Back Button
               Positioned(
@@ -68,11 +65,21 @@ class _LearnScreenState extends State<LearnScreen> with SingleTickerProviderStat
                   icon: Icon(Icons.arrow_back, color: Colors.white, size: 30),
                   onPressed: () async {
                     await _fadeController.reverse();
-                    if (mounted) Navigator.pop(context);
+                    if (mounted) {
+                      Future.delayed(Duration(milliseconds: 100), () {
+                        Navigator.pushReplacementNamed(context, '/home');
+                      });
+                    }
                   },
                 ),
               ),
-              // Main content with fade animation
+              // Settings Button
+              Positioned(
+                top: 16,
+                right: 16,
+                child: SettingsButton(),
+              ),
+              // Main content
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: Padding(
