@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'dart:math';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class TalkScreen extends StatefulWidget {
   @override
@@ -63,7 +65,7 @@ class _TalkScreenState extends State<TalkScreen> {
             ),
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withOpacity(0.3),
               ),
             ),
             Center(
@@ -90,14 +92,22 @@ class _TalkScreenState extends State<TalkScreen> {
                     SizedBox(
                       height: 300,
                       width: 300,
-                      child: ModelViewer(
-                        src: 'assets/models/fox.glb',
-                        alt: "3D model of a fox",
-                        ar: false,
-                        autoRotate: true,
-                        cameraControls: true,
-                        backgroundColor: Colors.transparent,
-                      ),
+                      child: (kIsWeb || Platform.isAndroid || Platform.isIOS)
+                          ? ModelViewer(
+                              src: 'assets/models/fox.glb',
+                              alt: "3D model of a fox",
+                              ar: false,
+                              autoRotate: true,
+                              cameraControls: true,
+                              backgroundColor: Colors.transparent,
+                            )
+                          : Center(
+                              child: Text(
+                                "3D model viewer is not supported on this platform.",
+                                style: TextStyle(color: Colors.white),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
                     ),
                     SizedBox(height: 40),
                     Container(
