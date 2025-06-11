@@ -8,14 +8,19 @@ import 'pages/utils/settings.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  print("🔵 Step 1: Flutter binding initialized");
 
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-  } catch (e) {
-    print("❌ Firebase init failed: $e");
+    print("🟢 Step 2: Firebase initialized successfully");
+  } catch (e, stack) {
+    print("🔴 Firebase init failed: $e");
+    print("🔴 Stacktrace: $stack");
   }
+
+  print("🟢 Step 3: Running the app");
 
   runApp(
     ChangeNotifierProvider(
@@ -63,6 +68,7 @@ class _ABCDigiKidsAppState extends State<ABCDigiKidsApp> with WidgetsBindingObse
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'ABCDigiKids',
       theme: ThemeData(primarySwatch: Colors.blue),
       initialRoute: AppRoutes.login,
