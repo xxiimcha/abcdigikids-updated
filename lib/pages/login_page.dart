@@ -8,7 +8,6 @@ import '../widgets/custom_text_field.dart';
 import 'signup_page.dart';
 import 'profile_selection_page.dart';
 import 'create_profile_page.dart';
-import 'settings/parental_control_settings.dart'; // ✅ Add this
 
 class LoginPage extends StatefulWidget {
   @override
@@ -25,48 +24,23 @@ class _LoginPageState extends State<LoginPage> {
 
   void _showSettingsDialog() {
     final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-    final isLoggedIn = _auth.currentUser != null; // ✅ Check login state
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Settings"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Background Music Toggle
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Background Music"),
-                Consumer<SettingsProvider>(
-                  builder: (context, provider, _) => Switch(
-                    value: provider.isMusicOn,
-                    onChanged: (value) {
-                      provider.toggleMusic(value);
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 16),
-
-            // Parental Controls navigation (only if logged in)
-            if (isLoggedIn)
-              ListTile(
-                leading: Icon(Icons.lock, color: Colors.teal),
-                title: Text("Parental Controls"),
-                trailing: Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  Navigator.of(context).pop(); // close dialog
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ParentalControlSettingsPage()),
-                  );
+            Text("Background Music"),
+            Consumer<SettingsProvider>(
+              builder: (context, provider, _) => Switch(
+                value: provider.isMusicOn,
+                onChanged: (value) {
+                  provider.toggleMusic(value);
+                  Navigator.of(context).pop();
                 },
               ),
+            ),
           ],
         ),
       ),
