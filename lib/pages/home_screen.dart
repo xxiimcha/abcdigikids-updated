@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animations/animations.dart'; // For smooth transitions
 import 'utils/routes.dart'; // Import routes
-import '../pages/features/learn/learn_screen.dart'; 
-import '../pages/features/play/play_screen.dart'; 
+import '../pages/features/learn/learn_screen.dart';
+import '../pages/features/play/play_screen.dart';
 import '../pages/features/speak/talk_screen.dart';
+import '../pages/features/story/storytelling_screen.dart'; // NEW import
 
 class HomeScreen extends StatefulWidget {
   final String profileName;
@@ -27,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _buildHomeScreen(),
       TalkScreen(),
       LearnScreen(),
+      StorytellingScreen(), // ✅ Add this!
     ];
 
     _fabController = AnimationController(
@@ -36,7 +38,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       upperBound: 1.1,
     )..repeat(reverse: true);
   }
-
   @override
   void dispose() {
     _fabController.dispose();
@@ -47,24 +48,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       _selectedIndex = index;
     });
-
-    if (index == 0) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => PlayScreen()), // Navigate to PlayScreen
-      );
-    } else if (index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => LearnScreen()), // Navigate to LearnScreen
-      );
-    }
   }
-
 
   Widget _buildHomeScreen() {
     return Container(
-      width: double.infinity, // Ensure full width
+      width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.blueAccent.shade100, Colors.teal.shade300],
@@ -73,10 +61,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
       ),
       child: Center(
-        child: SingleChildScrollView( // Avoid overflow issues
+        child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center, // Center alignment
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _buildProfileCard(),
               SizedBox(height: 20),
@@ -97,7 +85,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-
   Widget _buildProfileCard() {
     return Column(
       children: [
@@ -109,7 +96,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         SizedBox(height: 15),
         Text(
           'Welcome, ${widget.profileName}!',
-          style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
+          style: GoogleFonts.poppins(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
       ],
     );
@@ -121,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _buildActionButton(Icons.videogame_asset, "Play", Colors.orangeAccent, 0),
         _buildActionButton(Icons.mic, "Talk", Colors.teal, 1),
         _buildActionButton(Icons.menu_book, "Learn", Colors.blue, 2),
-        _buildActionButton(Icons.auto_stories, "Storytelling", Colors.purple, 3), // New Storytelling button
+        _buildActionButton(Icons.auto_stories, "Storytelling", Colors.purple, 3),
       ],
     );
   }
@@ -133,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         onTap: () => _onItemTapped(index),
         child: Builder(
           builder: (context) {
-            double buttonWidth = MediaQuery.of(context).size.width * 0.7; // Move inside build
+            double buttonWidth = MediaQuery.of(context).size.width * 0.7;
             return AnimatedContainer(
               duration: Duration(milliseconds: 300),
               curve: Curves.easeInOut,
@@ -157,7 +148,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   SizedBox(width: 12),
                   Text(
                     label,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -167,7 +162,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -208,6 +202,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         return 'Talk';
       case 2:
         return 'Learn';
+      case 3:
+        return 'Storytelling';
       default:
         return 'App';
     }
