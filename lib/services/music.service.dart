@@ -1,25 +1,30 @@
 import 'package:audioplayers/audioplayers.dart';
 
 class MusicService {
-  late AudioPlayer _audioPlayer; // Use `late` to ensure it is initialized before being used
+  late AudioPlayer _audioPlayer;
 
   MusicService() {
-    _audioPlayer = AudioPlayer(); // Initialize here
+    _audioPlayer = AudioPlayer();
   }
 
-  // Start playing the music in the background
-  Future<void> playBackgroundMusic() async {
-    await _audioPlayer.play(AssetSource('assets/music/music.mp3'), volume: 0.5); // Path to your audio
-    _audioPlayer.setReleaseMode(ReleaseMode.loop); // Loop the music indefinitely
+  Future<void> playBackgroundMusic({double volume = 0.5}) async {
+    await _audioPlayer.play(
+      AssetSource('assets/music/music.mp3'),
+      volume: volume,
+    );
+    await _audioPlayer.setReleaseMode(ReleaseMode.loop);
   }
 
-  // Stop the music
   Future<void> stopMusic() async {
     await _audioPlayer.stop();
   }
 
-  // Pause the music
   Future<void> pauseMusic() async {
     await _audioPlayer.pause();
+  }
+
+  // ✅ New: Set volume
+  Future<void> setVolume(double value) async {
+    await _audioPlayer.setVolume(value);
   }
 }
