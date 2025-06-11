@@ -8,9 +8,15 @@ import 'pages/utils/settings.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    print("❌ Firebase init failed: $e");
+  }
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => SettingsProvider(),
@@ -25,10 +31,18 @@ class ABCDigiKidsApp extends StatefulWidget {
 }
 
 class _ABCDigiKidsAppState extends State<ABCDigiKidsApp> with WidgetsBindingObserver {
+  late SettingsProvider settingsProvider;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
   }
 
   @override
@@ -39,7 +53,6 @@ class _ABCDigiKidsAppState extends State<ABCDigiKidsApp> with WidgetsBindingObse
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
     if (state == AppLifecycleState.paused) {
       settingsProvider.pauseMusic();
     } else if (state == AppLifecycleState.resumed) {
@@ -53,33 +66,33 @@ class _ABCDigiKidsAppState extends State<ABCDigiKidsApp> with WidgetsBindingObse
       title: 'ABCDigiKids',
       theme: ThemeData(primarySwatch: Colors.blue),
       initialRoute: AppRoutes.login,
-      onGenerateRoute: _onGenerateRoute,
+      onGenerateRoute: (settings) {
+        final routeName = settings.name ?? '';
+        final routeBuilder = AppRoutes.routes[routeName];
+
+        final mutedRoutes = {
+          AppRoutes.login,
+          AppRoutes.signup,
+          AppRoutes.profileSelection,
+        };
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mutedRoutes.contains(routeName)) {
+            settingsProvider.stopMusic();
+          } else {
+            if (settingsProvider.isMusicOn) {
+              settingsProvider.resumeMusic();
+            }
+          }
+        });
+
+        if (routeBuilder != null) {
+          return MaterialPageRoute(builder: routeBuilder, settings: settings);
+        }
+
+        // fallback route
+        return MaterialPageRoute(builder: (context) => LoginPage());
+      },
     );
-  }
-
-  Route _onGenerateRoute(RouteSettings settings) {
-    final routeName = settings.name ?? '';
-    final routeBuilder = AppRoutes.routes[routeName];
-    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-
-    const mutedRoutes = {
-      AppRoutes.login,
-      AppRoutes.signup,
-      AppRoutes.profileSelection,
-    };
-
-    if (mutedRoutes.contains(routeName)) {
-      settingsProvider.stopMusic();
-    } else {
-      if (settingsProvider.isMusicOn) {
-        settingsProvider.resumeMusic();
-      }
-    }
-
-    if (routeBuilder != null) {
-      return MaterialPageRoute(builder: routeBuilder, settings: settings);
-    }
-
-    return MaterialPageRoute(builder: (context) => LoginPage());
   }
 }

@@ -4,6 +4,7 @@ import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'dart:math';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../../widgets/settings_button.dart';
 
 class TalkScreen extends StatefulWidget {
   @override
@@ -46,112 +47,132 @@ class _TalkScreenState extends State<TalkScreen> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Talk"),
-        centerTitle: true,
-        backgroundColor: Colors.teal,
-      ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Image.asset(
-                'assets/backgrounds/background.gif',
-                fit: BoxFit.cover,
-              ),
-            ),
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.3),
-              ),
-            ),
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 20),
-                    Text(
-                      _recognizedText,
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 20),
-                    CustomPaint(
-                      size: Size(double.infinity, 100),
-                      painter: SoundWavePainter(_isListening, _soundWaveAmplitude),
-                    ),
-                    SizedBox(height: 20),
-                    SizedBox(
-                      height: 300,
-                      width: 300,
-                      child: (kIsWeb || Platform.isAndroid || Platform.isIOS)
-                          ? ModelViewer(
-                              src: 'assets/models/fox.glb',
-                              alt: "3D model of a fox",
-                              ar: false,
-                              autoRotate: true,
-                              cameraControls: true,
-                              backgroundColor: Colors.transparent,
-                            )
-                          : Center(
-                              child: Text(
-                                "3D model viewer is not supported on this platform.",
-                                style: TextStyle(color: Colors.white),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                    ),
-                    SizedBox(height: 40),
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [Colors.orange, Colors.yellow],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 10,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          _isListening ? Icons.mic_off : Icons.mic,
-                          size: 60,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          if (_isListening) {
-                            _stopListening();
-                          } else {
-                            _startListening();
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    extendBodyBehindAppBar: true,
+    backgroundColor: Colors.black, // fallback
+    body: Stack(
+      children: [
+        // Background image
+        Positioned.fill(
+          child: Image.asset(
+            'assets/backgrounds/background.gif',
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-    );
-  }
+
+        // Overlay
+        Positioned.fill(
+          child: Container(color: Colors.black.withOpacity(0.4)),
+        ),
+
+        // Top-right settings button
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 12,
+          right: 16,
+          child: SettingsButton(),
+        ),
+
+        // Main content
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 120, left: 16, right: 16, bottom: 120),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 3D model
+                SizedBox(
+                  height: 200,
+                  width: 200,
+                  child: (kIsWeb || Platform.isAndroid || Platform.isIOS)
+                      ? ModelViewer(
+                          src: 'assets/models/fox.glb',
+                          alt: "3D model of a fox",
+                          ar: false,
+                          autoRotate: true,
+                          cameraControls: true,
+                          backgroundColor: Colors.transparent,
+                        )
+                      : Text(
+                          "3D model viewer not supported.",
+                          style: TextStyle(color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                ),
+                const SizedBox(height: 24),
+
+                // Recognized text
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    _recognizedText,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                // Soundwave
+                CustomPaint(
+                  size: const Size(double.infinity, 80),
+                  painter: SoundWavePainter(_isListening, _soundWaveAmplitude),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Mic button
+        Positioned(
+          bottom: 40,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [Colors.orange, Colors.yellow],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 8,
+                    spreadRadius: 3,
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: Icon(
+                  _isListening ? Icons.mic_off : Icons.mic,
+                  size: 40,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  _isListening ? _stopListening() : _startListening();
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 }
 
 class SoundWavePainter extends CustomPainter {
@@ -186,7 +207,5 @@ class SoundWavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

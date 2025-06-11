@@ -196,21 +196,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         },
         child: _pages[_selectedIndex],
       ),
-      floatingActionButton: ScaleTransition(
-        scale: _fabController,
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.pushNamed(context, AppRoutes.talk);
-          },
-          tooltip: "Talk Now",
-          child: Icon(Icons.mic, size: 30, color: Colors.white),
-          backgroundColor: Colors.teal,
-          elevation: 8,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(25),
-          ),
-        ),
-      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
