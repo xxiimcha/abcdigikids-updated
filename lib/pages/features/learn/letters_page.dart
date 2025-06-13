@@ -1,5 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../../widgets/settings_button.dart'; // ✅ Import the SettingsButton
+import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../../widgets/settings_button.dart';
 
 class LettersPage extends StatefulWidget {
   @override
@@ -14,23 +19,82 @@ class _LettersPageState extends State<LettersPage> {
 
   final PageController _pageController = PageController();
   int _currentIndex = 0;
+  final FlutterTts _flutterTts = FlutterTts();
+
+  @override
+  void initState() {
+    super.initState();
+    _flutterTts.setLanguage("en-US");
+    _flutterTts.setSpeechRate(0.4); // Child-friendly pace
+  }
 
   void _onPageChanged(int index) {
     setState(() {
       _currentIndex = index;
     });
+    _speakCurrentLetter();
   }
 
   void _nextCard() {
     if (_currentIndex < imagePaths.length - 1) {
-      _pageController.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+      _pageController.nextPage(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeIn,
+      );
+      Future.delayed(Duration(milliseconds: 350), _speakCurrentLetter);
     }
   }
 
   void _previousCard() {
     if (_currentIndex > 0) {
-      _pageController.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+      _pageController.previousPage(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeIn,
+      );
+      Future.delayed(Duration(milliseconds: 350), _speakCurrentLetter);
     }
+  }
+
+  Future<void> _speakCurrentLetter() async {
+    try {
+      final assetPath = imagePaths[_currentIndex];
+
+      // Load image from assets
+      final byteData = await rootBundle.load(assetPath);
+      final buffer = byteData.buffer;
+      final imageBytes = buffer.asUint8List();
+
+      // Write to temporary file (required for MLKit OCR)
+      final tempDir = await getTemporaryDirectory();
+      final filePath = '${tempDir.path}/ocr_image.png';
+      final imageFile = await File(filePath).writeAsBytes(imageBytes);
+
+      final inputImage = InputImage.fromFilePath(filePath);
+      final textRecognizer = TextRecognizer();
+      final recognizedText = await textRecognizer.processImage(inputImage);
+
+      final extractedText = recognizedText.text.trim();
+      final letter = String.fromCharCode(65 + _currentIndex);
+
+      // Assume the last line is the keyword (e.g., Dog)
+      final lines = extractedText.split('\n').where((l) => l.trim().isNotEmpty).toList();
+      final word = lines.isNotEmpty ? lines.last : "";
+
+      final phrase = word.isNotEmpty ? "$letter is for $word" : letter;
+
+      await _flutterTts.stop();
+      await _flutterTts.speak(phrase);
+    } catch (e) {
+      print('Error with OCR or TTS: $e');
+      await _flutterTts.speak(String.fromCharCode(65 + _currentIndex));
+    }
+  }
+
+  @override
+  void dispose() {
+    _flutterTts.stop();
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -68,7 +132,7 @@ class _LettersPageState extends State<LettersPage> {
           // Flashcard swiper
           Column(
             children: [
-              SizedBox(height: 80), // Padding below top buttons
+              SizedBox(height: 80),
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
@@ -96,7 +160,6 @@ class _LettersPageState extends State<LettersPage> {
                   },
                 ),
               ),
-              // Navigation buttons
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20.0),
                 child: Row(
@@ -128,10 +191,8 @@ class _LettersPageState extends State<LettersPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Handle microphone or voice functionality
-        },
-        child: Icon(Icons.mic, size: 30, color: Colors.white),
+        onPressed: _speakCurrentLetter,
+        child: Icon(Icons.volume_up, size: 30, color: Colors.white),
         backgroundColor: Colors.blueAccent,
         elevation: 5,
       ),

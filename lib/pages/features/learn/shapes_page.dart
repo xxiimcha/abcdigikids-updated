@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../widgets/settings_button.dart'; // Ensure you have this widget
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:path/path.dart' as path;
+import '../../../widgets/settings_button.dart';
 
 class ShapesPage extends StatefulWidget {
   @override
@@ -7,41 +9,74 @@ class ShapesPage extends StatefulWidget {
 }
 
 class _ShapesPageState extends State<ShapesPage> {
-  final List<String> imagePaths = [
-    'assets/learn_shapes/circle.png',
-    'assets/learn_shapes/square.png',
-    'assets/learn_shapes/triangle.png',
-    'assets/learn_shapes/rectangle.png',
-    // Add more shapes if needed
-  ];
-
+  final List<String> imagePaths = List.generate(
+    8,
+    (index) => 'assets/learn_shapes/${[
+      'circle',
+      'diamond',
+      'heart',
+      'oval',
+      'rectangle',
+      'square',
+      'star',
+      'triangle'
+    ][index]}.png',
+  );
+  
   final PageController _pageController = PageController();
+  final FlutterTts _flutterTts = FlutterTts();
+
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _flutterTts.setLanguage("en-US");
+    _flutterTts.setSpeechRate(0.4);
+  }
 
   void _onPageChanged(int index) {
     setState(() {
       _currentIndex = index;
     });
+    _speakCurrentShape();
   }
 
   void _nextCard() {
     if (_currentIndex < imagePaths.length - 1) {
       _pageController.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+      Future.delayed(Duration(milliseconds: 350), _speakCurrentShape);
     } else {
       _pageController.animateToPage(0, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+      Future.delayed(Duration(milliseconds: 350), _speakCurrentShape);
     }
   }
 
   void _previousCard() {
     if (_currentIndex > 0) {
       _pageController.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+      Future.delayed(Duration(milliseconds: 350), _speakCurrentShape);
     } else {
       _pageController.animateToPage(imagePaths.length - 1, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+      Future.delayed(Duration(milliseconds: 350), _speakCurrentShape);
     }
   }
 
-  String _getShapeName(String path) {
-    return path.split('/').last.split('.').first;
+  String _getShapeName(String filePath) {
+    return path.basenameWithoutExtension(filePath); // e.g., 'circle'
+  }
+
+  Future<void> _speakCurrentShape() async {
+    final shapeName = _getShapeName(imagePaths[_currentIndex]);
+    await _flutterTts.stop();
+    await _flutterTts.speak(shapeName);
+  }
+
+  @override
+  void dispose() {
+    _flutterTts.stop();
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -87,74 +122,80 @@ class _ShapesPageState extends State<ShapesPage> {
                   onPageChanged: _onPageChanged,
                   itemCount: imagePaths.length,
                   itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20.0),
+                    final shapeName = _getShapeName(imagePaths[index]);
+                    return Center(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 10,
+                              offset: Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Expanded(
                               child: Image.asset(
                                 imagePaths[index],
-                                fit: BoxFit.cover,
+                                fit: BoxFit.contain,
                               ),
                             ),
-                          ),
-                          SizedBox(height: 20),
-                          Text(
-                            _getShapeName(imagePaths[index]).toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   },
                 ),
+
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0),
+                padding: const EdgeInsets.only(bottom: 20.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    ElevatedButton(
+                    ElevatedButton.icon(
                       onPressed: _previousCard,
-                      child: Text('Previous'),
+                      icon: Icon(Icons.arrow_back),
+                      label: Text('Previous'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
-                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                         textStyle: TextStyle(fontSize: 16),
+                        shape: StadiumBorder(),
                       ),
                     ),
-                    ElevatedButton(
+                    FloatingActionButton(
+                      onPressed: _speakCurrentShape,
+                      child: Icon(Icons.volume_up, size: 30, color: Colors.white),
+                      backgroundColor: Colors.deepPurple,
+                      elevation: 6,
+                    ),
+                    ElevatedButton.icon(
                       onPressed: _nextCard,
-                      child: Text('Next'),
+                      icon: Icon(Icons.arrow_forward),
+                      label: Text('Next'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
-                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                         textStyle: TextStyle(fontSize: 16),
+                        shape: StadiumBorder(),
                       ),
                     ),
                   ],
                 ),
               ),
+
             ],
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Add TTS or audio here
-        },
-        child: Icon(Icons.mic, size: 30, color: Colors.white),
-        backgroundColor: Colors.blueAccent,
-        elevation: 5,
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }

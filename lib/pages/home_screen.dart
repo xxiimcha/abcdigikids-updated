@@ -26,9 +26,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.initState();
     _pages = [
       _buildHomeScreen(),
-      TalkScreen(),
-      LearnScreen(),
-      StorytellingScreen(), // ✅ Add this!
+    PlayScreen(),         // index 0: Play
+    TalkScreen(),         // index 1: Talk
+    LearnScreen(),        // index 2: Learn
+    StorytellingScreen(), // index 3: Story
     ];
 
     _fabController = AnimationController(
@@ -109,10 +110,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildQuickActions() {
     return Column(
       children: [
-        _buildActionButton(Icons.videogame_asset, "Play", Colors.orangeAccent, 0),
-        _buildActionButton(Icons.mic, "Talk", Colors.teal, 1),
-        _buildActionButton(Icons.menu_book, "Learn", Colors.blue, 2),
-        _buildActionButton(Icons.auto_stories, "Storytelling", Colors.purple, 3),
+        _buildActionButton(Icons.videogame_asset, "Play", Colors.orangeAccent, 1),
+        _buildActionButton(Icons.mic, "Talk", Colors.teal, 2),
+        _buildActionButton(Icons.menu_book, "Learn", Colors.blue, 3),
+        _buildActionButton(Icons.auto_stories, "Storytelling", Colors.purple, 4),
       ],
     );
   }
@@ -199,13 +200,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       case 0:
         return 'Home';
       case 1:
-        return 'Talk';
+        return 'Play';
       case 2:
-        return 'Learn';
+        return 'Talk';
       case 3:
+        return 'Learn';
+      case 4:
         return 'Storytelling';
       default:
         return 'App';
     }
   }
+
 }

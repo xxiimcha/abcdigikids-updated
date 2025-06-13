@@ -1,5 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../../widgets/settings_button.dart'; // ✅ Import settings button widget
+import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import '../../../widgets/settings_button.dart';
 
 class NumbersPage extends StatefulWidget {
   @override
@@ -7,37 +12,79 @@ class NumbersPage extends StatefulWidget {
 }
 
 class _NumbersPageState extends State<NumbersPage> {
-  final List<String> imagePaths = [
-    'assets/learn_numbers/1.png',
-    'assets/learn_numbers/2.png',
-    'assets/learn_numbers/3.png',
-    'assets/learn_numbers/4.png',
-    // Add more image paths if needed
-  ];
-
+  final List<String> imagePaths = List.generate(
+    10, // Change to the number of flashcards you have
+    (index) => 'assets/learn_numbers/${index + 1}.png',
+  );
+  
   final PageController _pageController = PageController();
+  final FlutterTts _flutterTts = FlutterTts();
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _flutterTts.setLanguage("en-US");
+    _flutterTts.setSpeechRate(0.4);
+  }
 
   void _onPageChanged(int index) {
     setState(() {
       _currentIndex = index;
     });
+    _speakCurrentCard();
   }
 
   void _nextCard() {
     if (_currentIndex < imagePaths.length - 1) {
       _pageController.nextPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+      Future.delayed(Duration(milliseconds: 350), _speakCurrentCard);
     } else {
       _pageController.animateToPage(0, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+      Future.delayed(Duration(milliseconds: 350), _speakCurrentCard);
     }
   }
 
   void _previousCard() {
     if (_currentIndex > 0) {
       _pageController.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+      Future.delayed(Duration(milliseconds: 350), _speakCurrentCard);
     } else {
       _pageController.animateToPage(imagePaths.length - 1, duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+      Future.delayed(Duration(milliseconds: 350), _speakCurrentCard);
     }
+  }
+
+  Future<void> _speakCurrentCard() async {
+    try {
+      final assetPath = imagePaths[_currentIndex];
+      final byteData = await rootBundle.load(assetPath);
+      final bytes = byteData.buffer.asUint8List();
+
+      final dir = await getTemporaryDirectory();
+      final filePath = '${dir.path}/temp_number_image.png';
+      final imageFile = await File(filePath).writeAsBytes(bytes);
+
+      final inputImage = InputImage.fromFilePath(filePath);
+      final recognizer = TextRecognizer();
+      final result = await recognizer.processImage(inputImage);
+
+      final lines = result.text.trim().split('\n').where((e) => e.trim().isNotEmpty).toList();
+      final content = lines.isNotEmpty ? lines.last : "a number";
+
+      await _flutterTts.stop();
+      await _flutterTts.speak("This is $content.");
+    } catch (e) {
+      print("OCR or TTS error: $e");
+      await _flutterTts.speak("This is number ${_currentIndex + 1}.");
+    }
+  }
+
+  @override
+  void dispose() {
+    _flutterTts.stop();
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -45,21 +92,17 @@ class _NumbersPageState extends State<NumbersPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background image
           Positioned.fill(
             child: Image.asset(
               'assets/backgrounds/background.gif',
               fit: BoxFit.cover,
             ),
           ),
-          // Overlay
           Positioned.fill(
             child: Container(
               color: Colors.black.withOpacity(0.5),
             ),
           ),
-
-          // Back and Settings buttons
           Positioned(
             top: 30,
             left: 16,
@@ -73,8 +116,6 @@ class _NumbersPageState extends State<NumbersPage> {
             right: 16,
             child: SettingsButton(),
           ),
-
-          // Main content
           Column(
             children: [
               SizedBox(height: 80),
@@ -144,10 +185,8 @@ class _NumbersPageState extends State<NumbersPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Add speech or sound logic here
-        },
-        child: Icon(Icons.mic, size: 30, color: Colors.white),
+        onPressed: _speakCurrentCard,
+        child: Icon(Icons.volume_up, size: 30, color: Colors.white),
         backgroundColor: Colors.blueAccent,
         elevation: 5,
       ),
