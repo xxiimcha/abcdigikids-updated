@@ -12,6 +12,7 @@ class CreateProfilePage extends StatefulWidget {
 class _CreateProfilePageState extends State<CreateProfilePage> with SingleTickerProviderStateMixin {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController birthdayController = TextEditingController();
+  DateTime? _selectedBirthday;
   final TextEditingController pinController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -185,12 +186,18 @@ class _CreateProfilePageState extends State<CreateProfilePage> with SingleTicker
                         children: [
                           _buildRoundedTextField(nameController, 'Profile Name', Icons.person),
                           SizedBox(height: 15),
-                          _buildRoundedTextField(
-                            birthdayController,
-                            'Birthday (MM/DD/YYYY)',
-                            Icons.cake,
-                            keyboardType: TextInputType.datetime,
+                          GestureDetector(
+                            onTap: _pickDate,
+                            child: AbsorbPointer(
+                              child: _buildRoundedTextField(
+                                birthdayController,
+                                'Birthday (MM/DD/YYYY)',
+                                Icons.cake,
+                                keyboardType: TextInputType.datetime,
+                              ),
+                            ),
                           ),
+
                           SizedBox(height: 15),
                           AnimatedSwitcher(
                             duration: Duration(milliseconds: 300),
@@ -272,6 +279,38 @@ class _CreateProfilePageState extends State<CreateProfilePage> with SingleTicker
       ),
     );
   }
+
+Future<void> _pickDate() async {
+  final now = DateTime.now();
+  final picked = await showDatePicker(
+    context: context,
+    initialDate: now,
+    firstDate: DateTime(now.year - 10), // 10 years ago
+    lastDate: now,
+    builder: (context, child) {
+      return Theme(
+        data: ThemeData.light().copyWith(
+          colorScheme: ColorScheme.light(
+            primary: Colors.orangeAccent,
+            onPrimary: Colors.white,
+            surface: Colors.blueAccent,
+            onSurface: Colors.black,
+          ),
+          dialogBackgroundColor: Colors.white,
+        ),
+        child: child!,
+      );
+    },
+  );
+
+  if (picked != null) {
+    setState(() {
+      _selectedBirthday = picked;
+      birthdayController.text =
+          '${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}/${picked.year}';
+    });
+  }
+}
 
   Widget _buildRoundedTextField(TextEditingController controller, String hintText, IconData icon,
       {bool obscureText = false, TextInputType keyboardType = TextInputType.text}) {

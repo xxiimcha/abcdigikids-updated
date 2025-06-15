@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:model_viewer_plus/model_viewer_plus.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'dart:math';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../../widgets/settings_button.dart';
 
 class TalkScreen extends StatefulWidget {
@@ -13,6 +16,7 @@ class TalkScreen extends StatefulWidget {
 
 class _TalkScreenState extends State<TalkScreen> {
   late stt.SpeechToText _speech;
+  late FlutterTts _tts;
   bool _isListening = false;
   String _recognizedText = 'Tap the mic and start speaking...';
   double _soundWaveAmplitude = 0.0;
@@ -21,6 +25,15 @@ class _TalkScreenState extends State<TalkScreen> {
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
+    _tts = FlutterTts();
+
+    Future.delayed(Duration(milliseconds: 500), () {
+      const greeting = "Hello! I'm your fox friend. Ask me anything!";
+      setState(() {
+        _recognizedText = greeting;
+      });
+      _tts.speak(greeting);
+    });
   }
 
   void _startListening() async {
@@ -31,10 +44,16 @@ class _TalkScreenState extends State<TalkScreen> {
     if (available) {
       setState(() => _isListening = true);
       _speech.listen(
-        onResult: (val) => setState(() {
-          _recognizedText = val.recognizedWords;
-          _soundWaveAmplitude = Random().nextDouble() * 30;
-        }),
+        onResult: (val) async {
+          setState(() {
+            _recognizedText = val.recognizedWords;
+            _soundWaveAmplitude = Random().nextDouble() * 30;
+          });
+
+          if (val.hasConfidenceRating && val.confidence > 0.5 && val.finalResult) {
+            await _sendToAI(_recognizedText);
+          }
+        },
       );
     }
   }
@@ -47,132 +66,149 @@ class _TalkScreenState extends State<TalkScreen> {
     });
   }
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    extendBodyBehindAppBar: true,
-    backgroundColor: Colors.black, // fallback
-    body: Stack(
-      children: [
-        // Background image
-        Positioned.fill(
-          child: Image.asset(
-            'assets/backgrounds/background.gif',
-            fit: BoxFit.cover,
-          ),
-        ),
+  Future<void> _sendToAI(String text) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://digikids-ai.onrender.com/predict_intent'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'text': text}),
+      );
 
-        // Overlay
-        Positioned.fill(
-          child: Container(color: Colors.black.withOpacity(0.4)),
-        ),
+      if (response.statusCode == 200) {
+        final result = json.decode(response.body);
+        final intent = result['intent'];
+        final answer = result['answer'];
+        print("Intent: $intent");
+        print("Answer: $answer");
 
-        // Top-right settings button
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 12,
-          right: 16,
-          child: SettingsButton(),
-        ),
+        await _respondToAnswer(answer);
+      } else {
+        print('Error from server: ${response.body}');
+      }
+    } catch (e) {
+      print('Failed to send to AI: $e');
+    }
+  }
 
-        // Main content
-        Positioned.fill(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 120, left: 16, right: 16, bottom: 120),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // 3D model
-                SizedBox(
-                  height: 200,
-                  width: 200,
-                  child: (kIsWeb || Platform.isAndroid || Platform.isIOS)
-                      ? ModelViewer(
-                          src: 'assets/models/fox.glb',
-                          alt: "3D model of a fox",
-                          ar: false,
-                          autoRotate: true,
-                          cameraControls: true,
-                          backgroundColor: Colors.transparent,
-                        )
-                      : Text(
-                          "3D model viewer not supported.",
-                          style: TextStyle(color: Colors.white),
-                          textAlign: TextAlign.center,
-                        ),
-                ),
-                const SizedBox(height: 24),
+  Future<void> _respondToAnswer(String answer) async {
+    await _speech.stop();
+    setState(() {
+      _isListening = false;
+      _recognizedText = answer;
+    });
+    await _tts.speak(answer);
+  }
 
-                // Recognized text
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    _recognizedText,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                // Soundwave
-                CustomPaint(
-                  size: const Size(double.infinity, 80),
-                  painter: SoundWavePainter(_isListening, _soundWaveAmplitude),
-                ),
-              ],
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/backgrounds/background.gif',
+              fit: BoxFit.cover,
             ),
           ),
-        ),
-
-        // Mic button
-        Positioned(
-          bottom: 40,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [Colors.orange, Colors.yellow],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 8,
-                    spreadRadius: 3,
+          Positioned.fill(
+            child: Container(color: Colors.black.withOpacity(0.4)),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 12,
+            right: 16,
+            child: SettingsButton(),
+          ),
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 120, left: 16, right: 16, bottom: 120),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    height: 200,
+                    width: 200,
+                    child: (kIsWeb || Platform.isAndroid || Platform.isIOS)
+                        ? ModelViewer(
+                            src: 'assets/models/fox.glb',
+                            alt: "3D model of a fox",
+                            ar: false,
+                            autoRotate: true,
+                            cameraControls: true,
+                            backgroundColor: Colors.transparent,
+                          )
+                        : Text(
+                            "3D model viewer not supported.",
+                            style: TextStyle(color: Colors.white),
+                            textAlign: TextAlign.center,
+                          ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      _recognizedText,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  CustomPaint(
+                    size: const Size(double.infinity, 80),
+                    painter: SoundWavePainter(_isListening, _soundWaveAmplitude),
                   ),
                 ],
               ),
-              child: IconButton(
-                icon: Icon(
-                  _isListening ? Icons.mic_off : Icons.mic,
-                  size: 40,
-                  color: Colors.white,
+            ),
+          ),
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Colors.orange, Colors.yellow],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      spreadRadius: 3,
+                    ),
+                  ],
                 ),
-                onPressed: () {
-                  _isListening ? _stopListening() : _startListening();
-                },
+                child: IconButton(
+                  icon: Icon(
+                    _isListening ? Icons.mic_off : Icons.mic,
+                    size: 40,
+                    color: Colors.white,
+                  ),
+                  onPressed: () {
+                    _isListening ? _stopListening() : _startListening();
+                  },
+                ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
+        ],
+      ),
+    );
+  }
 }
 
 class SoundWavePainter extends CustomPainter {
