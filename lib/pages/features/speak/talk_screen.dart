@@ -126,9 +126,8 @@ class _TalkScreenState extends State<TalkScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    height: 200,
-                    width: 200,
+                  Container(
+                    height: 300,
                     child: (kIsWeb || Platform.isAndroid || Platform.isIOS)
                         ? ModelViewer(
                             src: 'assets/models/fox.glb',
@@ -137,6 +136,8 @@ class _TalkScreenState extends State<TalkScreen> {
                             autoRotate: true,
                             cameraControls: true,
                             backgroundColor: Colors.transparent,
+                            cameraOrbit: "0deg 75deg 2.5m",
+                            fieldOfView: "35deg",
                           )
                         : Text(
                             "3D model viewer not supported.",
@@ -144,6 +145,7 @@ class _TalkScreenState extends State<TalkScreen> {
                             textAlign: TextAlign.center,
                           ),
                   ),
+
                   const SizedBox(height: 24),
                   Container(
                     padding: const EdgeInsets.all(16),
