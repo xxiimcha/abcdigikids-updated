@@ -55,6 +55,141 @@ class _ProfileSelectionPageState extends State<ProfileSelectionPage> with Single
     }
   }
 
+Future<bool> _showPinInput(BuildContext context, String profileName, String correctPin) async {
+  String enteredPin = '';
+  bool isValid = false;
+
+  await showModalBottomSheet(
+    context: context,
+    isDismissible: false,
+    backgroundColor: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+    ),
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Enter PIN for $profileName',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                    fontFamily: 'ComicSans',
+                  ),
+                ),
+                SizedBox(height: 20),
+                TextField(
+                  obscureText: true,
+                  keyboardType: TextInputType.number,
+                  maxLength: 4,
+                  style: TextStyle(
+                    color: Colors.deepPurple,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: '4-digit PIN',
+                    hintStyle: TextStyle(
+                      color: Colors.deepPurple.withOpacity(0.6),
+                      fontSize: 16,
+                    ),
+                    counterText: '',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide(color: Colors.deepPurple),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                  onChanged: (value) {
+                    enteredPin = value;
+                  },
+                ),
+                SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: Icon(Icons.cancel, color: Colors.white),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[500],
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        label: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'ComicSans',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: Icon(Icons.check, color: Colors.white),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () {
+                          if (enteredPin == correctPin) {
+                            isValid = true;
+                            Navigator.pop(context);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Incorrect PIN'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
+                        },
+                        label: Text(
+                          'Enter',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'ComicSans',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+
+  return isValid;
+}
+
+
   @override
   void dispose() {
     _controller.dispose();
@@ -127,14 +262,23 @@ class _ProfileSelectionPageState extends State<ProfileSelectionPage> with Single
                                 itemBuilder: (context, index) {
                                   var profile = profiles[index];
                                   return GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => HomeScreen(profileName: profile['name']),
-                                        ),
-                                      );
+                                    onTap: () async {
+                                      if (profile['pin'] != null && profile['pin'].toString().isNotEmpty) {
+                                        bool isCorrect = await _showPinInput(context, profile['name'], profile['pin']);
+                                        if (isCorrect) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (context) => HomeScreen(profileName: profile['name'])),
+                                          );
+                                        }
+                                      } else {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => HomeScreen(profileName: profile['name'])),
+                                        );
+                                      }
                                     },
+
                                     child: Column(
                                       children: [
                                         AnimatedContainer(
