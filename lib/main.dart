@@ -68,37 +68,33 @@ class _ABCDigiKidsAppState extends State<ABCDigiKidsApp> with WidgetsBindingObse
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'ABCDigiKids',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      initialRoute: AppRoutes.login,
-      onGenerateRoute: (settings) {
-        final routeName = settings.name ?? '';
-        final routeBuilder = AppRoutes.routes[routeName];
+  debugShowCheckedModeBanner: false,
+  title: 'ABCDigiKids',
+  theme: ThemeData(primarySwatch: Colors.blue),
+  initialRoute: AppRoutes.login,
+  onGenerateRoute: (settings) {
+    final mutedRoutes = {
+      AppRoutes.login,
+      AppRoutes.signup,
+      AppRoutes.profileSelection,
+    };
 
-        final mutedRoutes = {
-          AppRoutes.login,
-          AppRoutes.signup,
-          AppRoutes.profileSelection,
-        };
+    final routeName = settings.name ?? '';
 
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mutedRoutes.contains(routeName)) {
-            settingsProvider.stopMusic();
-          } else {
-            if (settingsProvider.isMusicOn) {
-              settingsProvider.resumeMusic();
-            }
-          }
-        });
-
-        if (routeBuilder != null) {
-          return MaterialPageRoute(builder: routeBuilder, settings: settings);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mutedRoutes.contains(routeName)) {
+        settingsProvider.stopMusic();
+      } else {
+        if (settingsProvider.isMusicOn) {
+          settingsProvider.resumeMusic();
         }
+      }
+    });
 
-        // fallback route
-        return MaterialPageRoute(builder: (context) => LoginPage());
-      },
-    );
+    // ✅ Use your custom route handler
+    return AppRoutes.onGenerateRoute(settings);
+  },
+);
+
   }
 }

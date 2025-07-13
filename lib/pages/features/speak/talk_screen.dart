@@ -8,8 +8,21 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../widgets/settings_button.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../utils/session_tracker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class TalkScreen extends StatefulWidget {
+  final String profileName;
+  final String profileId;
+  final String userId;
+
+  TalkScreen({
+    required this.profileName,
+    required this.profileId,
+    required this.userId,
+  });
+
   @override
   _TalkScreenState createState() => _TalkScreenState();
 }
@@ -20,12 +33,20 @@ class _TalkScreenState extends State<TalkScreen> {
   bool _isListening = false;
   String _recognizedText = 'Tap the mic and start speaking...';
   double _soundWaveAmplitude = 0.0;
+  late SessionTracker _tracker;
 
   @override
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
     _tts = FlutterTts();
+
+    _tracker = SessionTracker(
+      profileName: widget.profileName,
+      profileId: widget.profileId,
+      userId: widget.userId,
+    );
+    _tracker.start();
 
     Future.delayed(Duration(milliseconds: 500), () {
       const greeting = "Hello! I'm your fox friend. Ask me anything!";
@@ -34,6 +55,14 @@ class _TalkScreenState extends State<TalkScreen> {
       });
       _tts.speak(greeting);
     });
+  }
+
+  @override
+  void dispose() {
+    _tracker.end();
+    _speech.stop();
+    _tts.stop();
+    super.dispose();
   }
 
   void _startListening() async {
@@ -145,7 +174,6 @@ class _TalkScreenState extends State<TalkScreen> {
                             textAlign: TextAlign.center,
                           ),
                   ),
-
                   const SizedBox(height: 24),
                   Container(
                     padding: const EdgeInsets.all(16),

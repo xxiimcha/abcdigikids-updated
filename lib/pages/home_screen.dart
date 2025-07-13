@@ -9,8 +9,15 @@ import '../pages/features/story/storytelling_screen.dart'; // NEW import
 
 class HomeScreen extends StatefulWidget {
   final String profileName;
+  final String profileId;
+  final String userId;
 
-  HomeScreen({required this.profileName});
+  HomeScreen({
+    required this.profileName,
+    required this.profileId,
+    required this.userId,
+  });
+
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -27,7 +34,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _pages = [
       _buildHomeScreen(),
     PlayScreen(),         // index 0: Play
-    TalkScreen(),         // index 1: Talk
+    
+    TalkScreen(
+      profileName: widget.profileName,
+      profileId: widget.profileId,
+      userId: widget.userId,
+    ),      // index 1: Talk
     LearnScreen(),        // index 2: Learn
     StorytellingScreen(), // index 3: Story
     ];

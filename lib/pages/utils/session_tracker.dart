@@ -1,38 +1,37 @@
-// utils/session_tracker.dart
+// lib/utils/session_tracker.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SessionTracker {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String profileName;
   final String userId;
   final String profileId;
+  final String profileName;
 
-  DateTime? _startTime;
+  DateTime? _start;
 
   SessionTracker({
-    required this.profileName,
     required this.userId,
     required this.profileId,
+    required this.profileName,
   });
 
-  void startSession() {
-    _startTime = DateTime.now();
+  void start() {
+    _start = DateTime.now();
   }
 
-  Future<void> endSession() async {
-    if (_startTime == null) return;
-
-    DateTime endTime = DateTime.now();
-    Duration duration = endTime.difference(_startTime!);
+  Future<void> end() async {
+    if (_start == null) return;
+    final end = DateTime.now();
+    final duration = end.difference(_start!);
 
     await _firestore.collection('activity_logs').add({
-      'profileName': profileName,
-      'profileId': profileId, // 🔐 Log this too
       'userId': userId,
-      'startTime': _startTime,
-      'endTime': endTime,
+      'profileId': profileId,
+      'profileName': profileName,
+      'startTime': _start,
+      'endTime': end,
       'durationInSeconds': duration.inSeconds,
-      'activity': 'Session completed',
+      'activity': 'Used TalkScreen',
       'timestamp': FieldValue.serverTimestamp(),
     });
   }

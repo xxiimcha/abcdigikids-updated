@@ -41,7 +41,11 @@ class _ProfileSelectionPageState extends State<ProfileSelectionPage> with Single
           .get();
 
       setState(() {
-        profiles = snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+        profiles = snapshot.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          data['id'] = doc.id; // add profileId
+          return data;
+        }).toList();
         isLoading = false;
       });
 
@@ -268,13 +272,25 @@ Future<bool> _showPinInput(BuildContext context, String profileName, String corr
                                         if (isCorrect) {
                                           Navigator.push(
                                             context,
-                                            MaterialPageRoute(builder: (context) => HomeScreen(profileName: profile['name'])),
+                                            MaterialPageRoute(
+                                              builder: (context) => HomeScreen(
+                                                profileName: profile['name'],
+                                                profileId: profile['id'],
+                                                userId: _auth.currentUser?.uid ?? 'unknown',
+                                              ),
+                                            ),
                                           );
                                         }
                                       } else {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (context) => HomeScreen(profileName: profile['name'])),
+                                          MaterialPageRoute(
+                                            builder: (context) => HomeScreen(
+                                              profileName: profile['name'],
+                                              profileId: profile['id'],
+                                              userId: _auth.currentUser?.uid ?? 'unknown',
+                                            ),
+                                          ),
                                         );
                                       }
                                     },
