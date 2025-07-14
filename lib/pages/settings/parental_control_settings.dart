@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../usage.dashboard.dart';
 
 class ParentalControlSettingsPage extends StatefulWidget {
   const ParentalControlSettingsPage({Key? key}) : super(key: key);
@@ -23,6 +24,8 @@ class _ParentalControlSettingsPageState extends State<ParentalControlSettingsPag
   List<QueryDocumentSnapshot> _profiles = [];
   bool _loading = true;
   String? _errorMessage;
+
+  List<Map<String, dynamic>> _recentUsage = [];
 
   @override
   void initState() {
@@ -105,6 +108,26 @@ class _ParentalControlSettingsPageState extends State<ParentalControlSettingsPag
         _endTime = null;
       });
     }
+
+    await _loadRecentUsage();
+  }
+
+  Future<void> _loadRecentUsage() async {
+    if (_selectedProfileId == null || _userId == null) return;
+
+    final usageSnap = await _firestore
+        .collection('usage_logs')
+        .doc(_userId)
+        .collection('profiles')
+        .doc(_selectedProfileId)
+        .collection('logs')
+        .orderBy('timestamp', descending: true)
+        .limit(5)
+        .get();
+
+    setState(() {
+      _recentUsage = usageSnap.docs.map((doc) => doc.data()).toList();
+    });
   }
 
   TimeOfDay _parseTime(String formatted) {
@@ -198,139 +221,184 @@ class _ParentalControlSettingsPageState extends State<ParentalControlSettingsPag
     );
   }
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: Text('Parental Controls'),
-      backgroundColor: Colors.teal,
-      foregroundColor: Colors.white,
-      elevation: 0,
-    ),
-    body: _loading
-        ? Center(child: CircularProgressIndicator())
-        : _errorMessage != null
-            ? Center(child: Text(_errorMessage!))
-            : ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // Profile Selector
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: SizedBox(
-                      height: 100,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _profiles.length,
-                        itemBuilder: (context, index) {
-                          final profile = _profiles[index];
-                          final profileId = profile.id;
-                          final profileName = profile['name'] ?? 'Unnamed';
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Parental Controls'),
+        backgroundColor: Colors.teal,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: _loading
+          ? Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+              ? Center(child: Text(_errorMessage!))
+              : ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    // Profile Selector
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: SizedBox(
+                        height: 100,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _profiles.length,
+                          itemBuilder: (context, index) {
+                            final profile = _profiles[index];
+                            final profileId = profile.id;
+                            final profileName = profile['name'] ?? 'Unnamed';
 
-                          final isSelected = _selectedProfileId == profileId;
+                            final isSelected = _selectedProfileId == profileId;
 
-                          return GestureDetector(
-                            onTap: () async {
-                              setState(() {
-                                _selectedProfileId = profileId;
-                                _loading = true;
-                              });
-                              await _loadSettings();
-                              setState(() {
-                                _loading = false;
-                              });
-                            },
-                            child: Container(
-                              margin: EdgeInsets.symmetric(horizontal: 8),
-                              child: Column(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 30,
-                                    backgroundColor: isSelected ? Colors.teal : Colors.grey[300],
-                                    child: Icon(
-                                      Icons.person,
-                                      size: 30,
-                                      color: Colors.white,
+                            return GestureDetector(
+                              onTap: () async {
+                                setState(() {
+                                  _selectedProfileId = profileId;
+                                  _loading = true;
+                                });
+                                await _loadSettings();
+                                setState(() {
+                                  _loading = false;
+                                });
+                              },
+                              child: Container(
+                                margin: EdgeInsets.symmetric(horizontal: 8),
+                                child: Column(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 30,
+                                      backgroundColor: isSelected ? Colors.teal : Colors.grey[300],
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 30,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(height: 6),
-                                  Text(
-                                    profileName,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      color: isSelected ? Colors.teal : Colors.black,
+                                    SizedBox(height: 6),
+                                    Text(
+                                      profileName,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        color: isSelected ? Colors.teal : Colors.black,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+
+                    // PIN Section
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: ListTile(
+                        leading: Icon(Icons.password, color: Colors.teal),
+                        title: Text('Set or Change PIN'),
+                        trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('PIN screen not implemented')),
+                          );
+                        },
+                      ),
+                    ),
+                    SizedBox(height: 12),
+
+                    // Restrictions Section
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: Column(
+                        children: [
+                          SwitchListTile(
+                            secondary: Icon(Icons.lock_person, color: Colors.deepOrange),
+                            title: Text('Restrict Story Mode'),
+                            value: _restrictStoryMode,
+                            onChanged: (val) => _toggleRestriction('restrict_story_mode', val),
+                          ),
+                          Divider(height: 1),
+                          SwitchListTile(
+                            secondary: Icon(Icons.timer_off, color: Colors.purple),
+                            title: Text('Limit Play Time'),
+                            subtitle: (_startTime != null && _endTime != null)
+                                ? Text(
+                                    'Allowed: ${_formatTime(_startTime!)} - ${_formatTime(_endTime!)}',
+                                    style: TextStyle(color: Colors.grey[600]),
+                                  )
+                                : null,
+                            value: _limitPlayTime,
+                            onChanged: (val) => _toggleRestriction('limit_play_time', val),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 20),
+
+                    // Usage Log Section
+                    if (_recentUsage.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Recent App Usage',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          ..._recentUsage.map((log) {
+                            final dt = (log['timestamp'] as Timestamp).toDate();
+                            return ListTile(
+                              leading: Icon(Icons.history),
+                              title: Text('${log['screen']}'),
+                              subtitle: Text('${dt.toLocal()}'),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+
+                    // Footer
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                      child: Text(
+                        'These settings apply to the selected profile and are protected by a PIN.',
+                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    
+                    SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        icon: Icon(Icons.bar_chart, color: Colors.white),
+                        label: Text('View Usage Dashboard', style: TextStyle(color: Colors.white)),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => UsageDashboardPage(
+                                userId: _userId!,
+                                profileId: _selectedProfileId!,
                               ),
                             ),
                           );
                         },
                       ),
-                    ),
-                  ),
+                  ],
 
-                  // PIN Section
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    child: ListTile(
-                      leading: Icon(Icons.password, color: Colors.teal),
-                      title: Text('Set or Change PIN'),
-                      trailing: Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('PIN screen not implemented')),
-                        );
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 12),
+                  
+                ),
+                
+    );
 
-                  // Restrictions Section
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    child: Column(
-                      children: [
-                        SwitchListTile(
-                          secondary: Icon(Icons.lock_person, color: Colors.deepOrange),
-                          title: Text('Restrict Story Mode'),
-                          value: _restrictStoryMode,
-                          onChanged: (val) => _toggleRestriction('restrict_story_mode', val),
-                        ),
-                        Divider(height: 1),
-                        SwitchListTile(
-                          secondary: Icon(Icons.timer_off, color: Colors.purple),
-                          title: Text('Limit Play Time'),
-                          subtitle: (_startTime != null && _endTime != null)
-                              ? Text(
-                                  'Allowed: ${_formatTime(_startTime!)} - ${_formatTime(_endTime!)}',
-                                  style: TextStyle(color: Colors.grey[600]),
-                                )
-                              : null,
-                          value: _limitPlayTime,
-                          onChanged: (val) => _toggleRestriction('limit_play_time', val),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(height: 20),
-
-                  // Footer note
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      'These settings apply to the selected profile and are protected by a PIN.',
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              ),
-  );
-}
-
+    
+  }
 }
