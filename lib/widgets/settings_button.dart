@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../pages/utils/settings.dart';
 import '../pages/settings/parental_control_settings.dart';
 
@@ -69,18 +71,29 @@ class SettingsButton extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.lock, color: Colors.teal.shade300),
-                      title: Text("Parental Controls", style: TextStyle(color: isDark ? Colors.white : null)),
-                      trailing: Icon(Icons.arrow_forward_ios, size: 16, color: isDark ? Colors.white54 : null),
-                      onTap: () {
+                  // Parental Controls
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.lock, color: Colors.teal.shade300),
+                    title: Text("Parental Controls", style: TextStyle(color: isDark ? Colors.white : null)),
+                    trailing: Icon(Icons.arrow_forward_ios, size: 16, color: isDark ? Colors.white54 : null),
+                    onTap: () {
+                      final userId = FirebaseAuth.instance.currentUser?.uid;
+
+                      if (userId != null) {
                         Navigator.of(context).pop();
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => ParentalControlSettingsPage()),
+                          MaterialPageRoute(
+                            builder: (_) => const ParentalControlSettingsPage(),
+                          )
                         );
-                      },
-                    ),
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("User not logged in")),
+                        );
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
