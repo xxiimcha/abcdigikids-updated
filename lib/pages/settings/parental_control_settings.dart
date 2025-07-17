@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../usage.dashboard.dart';
+import 'setup.pin.dart';
 
 class ParentalControlSettingsPage extends StatefulWidget {
   const ParentalControlSettingsPage({Key? key}) : super(key: key);
@@ -303,9 +304,17 @@ class _ParentalControlSettingsPageState extends State<ParentalControlSettingsPag
                         title: Text('Set or Change PIN'),
                         trailing: Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('PIN screen not implemented')),
-                          );
+                          if (_userId != null && _selectedProfileId != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PinSetupPage(
+                                  userId: _userId!,
+                                  profileId: _selectedProfileId!,
+                                ),
+                              ),
+                            );
+                          }
                         },
                       ),
                     ),
