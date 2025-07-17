@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_selection_page.dart';
 import '../widgets/settings_button.dart';
+import 'package:flutter/services.dart';
 
 class CreateProfilePage extends StatefulWidget {
   @override
@@ -219,14 +220,30 @@ class _CreateProfilePageState extends State<CreateProfilePage> with SingleTicker
                                 if (_pinRequired)
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 10),
-                                    child: _buildRoundedTextField(
-                                      pinController,
-                                      'Enter PIN',
-                                      Icons.lock,
-                                      obscureText: true,
+                                    child: TextField(
+                                      controller: pinController,
                                       keyboardType: TextInputType.number,
+                                      obscureText: true,
+                                      maxLength: 4,
+                                      inputFormatters: [
+                                        LengthLimitingTextInputFormatter(4),
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
+                                      style: TextStyle(color: Colors.white),
+                                      decoration: InputDecoration(
+                                        hintText: 'Enter 4-digit PIN',
+                                        counterText: '', // hides "0/4" character counter
+                                        prefixIcon: Icon(Icons.lock, color: Colors.white70),
+                                        filled: true,
+                                        fillColor: Colors.white.withOpacity(0.2),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(15),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
                                     ),
                                   ),
+
                               ],
                             ),
                           ),
