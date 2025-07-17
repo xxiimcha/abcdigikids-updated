@@ -63,7 +63,13 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => LearnScreen());
 
       case play:
-        return MaterialPageRoute(builder: (_) => PlayScreen());
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(builder: (_) => PlayScreen(
+        
+            profileName: args['profileName'],
+            profileId: args['profileId'],
+            userId: args['userId']
+        ),);
 
       case memoryMatch:
         return MaterialPageRoute(builder: (_) => MemoryMatchGame());

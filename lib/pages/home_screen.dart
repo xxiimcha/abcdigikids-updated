@@ -33,7 +33,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.initState();
     _pages = [
       _buildHomeScreen(),
-    PlayScreen(),         // index 0: Play
+    PlayScreen(
+      
+      profileName: widget.profileName,
+      profileId: widget.profileId,
+      userId: widget.userId,
+    ),         // index 0: Play
     
     TalkScreen(
       profileName: widget.profileName,

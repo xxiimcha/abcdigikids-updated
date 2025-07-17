@@ -3,84 +3,116 @@ import 'package:flutter/services.dart';
 import '../../utils/routes.dart';
 import '../../../widgets/settings_button.dart';
 
-class PlayScreen extends StatelessWidget {
+class PlayScreen extends StatefulWidget {
+  final String? profileName;
+  final String? profileId;
+  final String? userId;
+
+  const PlayScreen({
+    super.key,
+    required this.profileName,
+    required this.profileId,
+    required this.userId,
+  });
+
+  @override
+  State<PlayScreen> createState() => _PlayScreenState();
+}
+
+class _PlayScreenState extends State<PlayScreen> {
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent, // 🔥 Remove white bar
-        systemNavigationBarColor: Colors.black, // optional: nav bar style
-      ),
-      child: Scaffold(
-        extendBodyBehindAppBar: true,
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          top: false, // 🔥 Important: let background go to top
-          child: Stack(
-            children: [
-              // Background image
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/backgrounds/chalkboard.gif',
-                  fit: BoxFit.cover,
+    final String profileName = widget.profileName ?? 'Guest';
+    final String profileId = widget.profileId ?? '';
+    final String userId = widget.userId ?? '';
+
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pushReplacementNamed(
+          context,
+          '/home',
+          arguments: {
+            'profileName': profileName,
+            'profileId': profileId,
+            'userId': userId,
+          },
+        );
+        return false;
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light.copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: Colors.black,
+        ),
+        child: Scaffold(
+          extendBodyBehindAppBar: true,
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            top: false,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/backgrounds/chalkboard.gif',
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
-              // Semi-transparent overlay
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black.withOpacity(0.5),
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.5),
+                  ),
                 ),
-              ),
-              // Settings Button
-              Positioned(
-                top: 40,
-                right: 16,
-                child: SettingsButton(),
-              ),
-              // Game Cards
-              Padding(
-                padding: const EdgeInsets.only(top: 120.0, left: 16.0, right: 16.0, bottom: 16.0),
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                  children: [
-                    GameCard(
-                      title: 'Memory Match',
-                      icon: Icons.memory,
-                      color: Colors.blue,
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.memoryMatch);
-                      },
-                    ),
-                    GameCard(
-                      title: 'Puzzle Game',
-                      icon: Icons.extension,
-                      color: Colors.green,
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.puzzleGame);
-                      },
-                    ),
-                    GameCard(
-                      title: 'Quiz Game',
-                      icon: Icons.quiz,
-                      color: Colors.orange,
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.quizGame);
-                      },
-                    ),
-                    GameCard(
-                      title: 'Identifying Game',
-                      icon: Icons.visibility,
-                      color: Colors.purple,
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.identifyingGame);
-                      },
-                    ),
-                  ],
+                Positioned(
+                  top: 40,
+                  right: 16,
+                  child: SettingsButton(),
                 ),
-              ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.only(
+                      top: 120.0, left: 16.0, right: 16.0, bottom: 16.0),
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 14,
+                    mainAxisSpacing: 14,
+                    children: [
+                      GameCard(
+                        title: 'Memory Match',
+                        icon: Icons.memory,
+                        color: Colors.blue,
+                        onTap: () {
+                          Navigator.pushNamed(context, AppRoutes.memoryMatch);
+                        },
+                      ),
+                      GameCard(
+                        title: 'Puzzle Game',
+                        icon: Icons.extension,
+                        color: Colors.green,
+                        onTap: () {
+                          Navigator.pushNamed(context, AppRoutes.puzzleGame);
+                        },
+                      ),
+                      GameCard(
+                        title: 'Quiz Game',
+                        icon: Icons.quiz,
+                        color: Colors.orange,
+                        onTap: () {
+                          Navigator.pushNamed(context, AppRoutes.quizGame);
+                        },
+                      ),
+                      GameCard(
+                        title: 'Identifying Game',
+                        icon: Icons.visibility,
+                        color: Colors.purple,
+                        onTap: () {
+                          Navigator.pushNamed(
+                              context, AppRoutes.identifyingGame);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -94,7 +126,8 @@ class GameCard extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
-  GameCard({
+  const GameCard({
+    super.key,
     required this.title,
     required this.icon,
     required this.color,
@@ -113,11 +146,11 @@ class GameCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 50, color: Colors.white),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,

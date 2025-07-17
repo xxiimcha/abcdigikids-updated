@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
+import '../../utils/routes.dart';
+import '../../../widgets/settings_button.dart';
 
 class TalkScreen extends StatefulWidget {
   final String profileName;
@@ -99,7 +101,6 @@ class _TalkScreenState extends State<TalkScreen> with SingleTickerProviderStateM
   Future<void> _askGemini(String prompt) async {
     final childFriendlyPrompt = prompt;
 
-
     try {
       final result = await Gemini.instance.text(childFriendlyPrompt);
       final output = result?.output?.trim().isNotEmpty == true
@@ -140,20 +141,26 @@ class _TalkScreenState extends State<TalkScreen> with SingleTickerProviderStateM
           final message = _messages[_messages.length - 1 - index];
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 6.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  message.role,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  message.content,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 18),
-                ),
-              ],
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message.role,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    message.content,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -167,72 +174,113 @@ class _TalkScreenState extends State<TalkScreen> with SingleTickerProviderStateM
         ? _micAnimationController.value
         : 1.0;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F3FA),
-      appBar: AppBar(
-        title: const Text('Voice Chat with Gemini'),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: SafeArea(
-        child: Column(
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pushReplacementNamed(
+          context,
+          '/home',
+          arguments: {
+            'profileName': widget.profileName,
+            'profileId': widget.profileId,
+            'userId': widget.userId,
+          },
+        );
+        return false;
+      },
+
+      child: Scaffold(
+        body: Stack(
           children: [
-            const SizedBox(height: 16),
-            if (_isSpeaking)
-              const Column(
+            // Background GIF
+            Positioned.fill(
+              child: Image.asset(
+                'assets/backgrounds/background.gif',
+                fit: BoxFit.cover,
+              ),
+            ),
+
+            // Overlay for readability
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.4),
+              ),
+            ),
+
+            // Top settings button
+            Positioned(
+              top: 40,
+              right: 16,
+              child: SettingsButton(),
+            ),
+
+            // Foreground content
+            SafeArea(
+              child: Column(
                 children: [
-                  Icon(Icons.volume_up, color: Colors.deepPurple, size: 40),
-                  SizedBox(height: 8),
-                  Text("Gemini is speaking...", style: TextStyle(color: Colors.deepPurple)),
-                  SizedBox(height: 12),
-                ],
-              ),
-            if (_isListening)
-              const Column(
-                children: [
-                  Icon(Icons.hearing, color: Colors.pinkAccent, size: 40),
-                  SizedBox(height: 8),
-                  Text("Listening...", style: TextStyle(color: Colors.pinkAccent)),
-                  SizedBox(height: 12),
-                ],
-              ),
-            _buildLyricScroll(),
-            if (_isLoading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: CircularProgressIndicator(),
-              ),
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: (!_isListening && !_isSpeaking) ? _startListening : null,
-              child: Transform.scale(
-                scale: micScale,
-                child: Container(
-                  padding: const EdgeInsets.all(28),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [Colors.redAccent, Colors.pinkAccent],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                  const SizedBox(height: 12),
+                  if (_isSpeaking)
+                    const Column(
+                      children: [
+                        Icon(Icons.volume_up, color: Colors.white, size: 40),
+                        SizedBox(height: 6),
+                        Text("Gemini is speaking...", style: TextStyle(color: Colors.white)),
+                        SizedBox(height: 12),
+                      ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.pinkAccent.withOpacity(0.6),
-                        blurRadius: 16,
-                        spreadRadius: 4,
-                      )
-                    ],
+                  if (_isListening)
+                    const Column(
+                      children: [
+                        Icon(Icons.hearing, color: Colors.white, size: 40),
+                        SizedBox(height: 6),
+                        Text("Listening...", style: TextStyle(color: Colors.white)),
+                        SizedBox(height: 12),
+                      ],
+                    ),
+                  _buildLyricScroll(),
+                  if (_isLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+
+            // Mic button centered
+            Center(
+              child: GestureDetector(
+                onTap: (!_isListening && !_isSpeaking) ? _startListening : null,
+                child: Transform.scale(
+                  scale: micScale,
+                  child: Container(
+                    padding: const EdgeInsets.all(48),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [Colors.redAccent, Colors.pinkAccent],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.pinkAccent.withOpacity(0.6),
+                          blurRadius: 20,
+                          spreadRadius: 6,
+                        )
+                      ],
+                    ),
+                    child: const Icon(Icons.mic, color: Colors.white, size: 64),
                   ),
-                  child: const Icon(Icons.mic, color: Colors.white, size: 40),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
+
 }
 
 class _Message {
