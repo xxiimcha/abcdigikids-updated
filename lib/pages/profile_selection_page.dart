@@ -62,125 +62,125 @@ class _ProfileSelectionPageState extends State<ProfileSelectionPage> with Single
 Future<bool> _showPinInput(BuildContext context, String profileName, String correctPin) async {
   String enteredPin = '';
   bool isValid = false;
+  final TextEditingController _pinController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
 
-  await showModalBottomSheet(
+  await showDialog(
+    barrierDismissible: false,
     context: context,
-    isDismissible: false,
-    backgroundColor: Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-    ),
     builder: (context) {
       return StatefulBuilder(
         builder: (context, setState) {
-          return Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
+          List<Widget> pinBoxes = List.generate(4, (index) {
+            return AnimatedContainer(
+              duration: Duration(milliseconds: 200),
+              width: 55,
+              height: 65,
+              margin: EdgeInsets.symmetric(horizontal: 10),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: index == enteredPin.length
+                      ? Colors.orangeAccent
+                      : Colors.purpleAccent,
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.deepPurple.withOpacity(0.15),
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Text(
+                index < enteredPin.length ? '●' : '',
+                style: TextStyle(
+                  fontSize: 28,
+                  color: Colors.deepPurple,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          });
+
+          return AlertDialog(
+            backgroundColor: Colors.pink[50],
+            contentPadding: EdgeInsets.all(24),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Enter PIN for $profileName',
                   style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
                     color: Colors.deepPurple,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
                     fontFamily: 'ComicSans',
                   ),
                 ),
-                SizedBox(height: 20),
-                TextField(
-                  obscureText: true,
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
-                  style: TextStyle(
-                    color: Colors.deepPurple,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                SizedBox(height: 30),
+                GestureDetector(
+                  onTap: () => _focusNode.requestFocus(),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: pinBoxes,
                   ),
-                  decoration: InputDecoration(
-                    hintText: '4-digit PIN',
-                    hintStyle: TextStyle(
-                      color: Colors.deepPurple.withOpacity(0.6),
-                      fontSize: 16,
-                    ),
-                    counterText: '',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.deepPurple),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.deepPurple, width: 2),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  ),
-                  onChanged: (value) {
-                    enteredPin = value;
-                  },
                 ),
-                SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: Icon(Icons.cancel, color: Colors.white),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[500],
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        label: Text(
-                          'Cancel',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: 'ComicSans',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: Icon(Icons.check, color: Colors.white),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () {
+                SizedBox(height: 24),
+                SizedBox(
+                  height: 0,
+                  width: 0,
+                  child: TextField(
+                    controller: _pinController,
+                    focusNode: _focusNode,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    style: TextStyle(color: Colors.transparent),
+                    cursorColor: Colors.transparent,
+                    decoration: InputDecoration(counterText: '', border: InputBorder.none),
+                    onChanged: (value) {
+                      if (value.length > 4) return;
+                      setState(() => enteredPin = value);
+
+                      if (value.length == 4) {
+                        Future.delayed(Duration(milliseconds: 200), () {
                           if (enteredPin == correctPin) {
                             isValid = true;
                             Navigator.pop(context);
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Incorrect PIN'),
+                                content: Text('Oops! That PIN is not correct.'),
                                 backgroundColor: Colors.redAccent,
                               ),
                             );
+                            setState(() {
+                              enteredPin = '';
+                              _pinController.clear();
+                            });
                           }
-                        },
-                        label: Text(
-                          'Enter',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: 'ComicSans',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                        });
+                      }
+                    },
+                  ),
+                ),
+                SizedBox(height: 20),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -192,7 +192,6 @@ Future<bool> _showPinInput(BuildContext context, String profileName, String corr
 
   return isValid;
 }
-
 
   @override
   void dispose() {

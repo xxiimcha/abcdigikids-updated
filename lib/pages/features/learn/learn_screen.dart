@@ -7,25 +7,9 @@ class LearnScreen extends StatefulWidget {
   _LearnScreenState createState() => _LearnScreenState();
 }
 
-class _LearnScreenState extends State<LearnScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 1),
-    );
-    _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeIn);
-    _fadeController.forward();
-  }
-
-  @override
-  void dispose() {
-    _fadeController.dispose();
-    super.dispose();
+class _LearnScreenState extends State<LearnScreen> {
+  Future<void> _goBack() async {
+    Navigator.pop(context);
   }
 
   @override
@@ -35,54 +19,56 @@ class _LearnScreenState extends State<LearnScreen> with SingleTickerProviderStat
 
     return WillPopScope(
       onWillPop: () async {
-        await _fadeController.reverse();
-        Future.delayed(Duration(milliseconds: 100), () {
-          Navigator.pushReplacementNamed(context, '/home');
-        });
+        await _goBack();
         return false;
       },
-      child: Scaffold(
-        body: SafeArea(
-          child: Stack(
-            children: [
-              // Background
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/backgrounds/chalkboard.gif',
-                  fit: BoxFit.cover,
-                  width: screenWidth,
-                  height: screenHeight,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          appBarTheme: AppBarTheme(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            foregroundColor: Colors.transparent,
+            iconTheme: IconThemeData(color: Colors.transparent),
+            titleTextStyle: TextStyle(color: Colors.transparent),
+          ),
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          extendBodyBehindAppBar: true,
+          appBar: PreferredSize(
+            preferredSize: Size.zero,
+            child: SizedBox.shrink(), // Removes default AppBar
+          ),
+          body: SafeArea(
+            child: Stack(
+              children: [
+                // Background
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/backgrounds/chalkboard.gif',
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
-              Positioned.fill(
-                child: Container(color: Colors.black.withOpacity(0.5)),
-              ),
-              // Back Button
-              Positioned(
-                top: 16,
-                left: 16,
-                child: IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.white, size: 30),
-                  onPressed: () async {
-                    await _fadeController.reverse();
-                    if (mounted) {
-                      Future.delayed(Duration(milliseconds: 100), () {
-                        Navigator.pushReplacementNamed(context, '/home');
-                      });
-                    }
-                  },
+                Positioned.fill(
+                  child: Container(color: Colors.black.withOpacity(0.5)),
                 ),
-              ),
-              // Settings Button
-              Positioned(
-                top: 16,
-                right: 16,
-                child: SettingsButton(),
-              ),
-              // Main content
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: Padding(
+                // Custom Back Button
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  child: IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.white, size: 30),
+                    onPressed: _goBack,
+                  ),
+                ),
+                // Settings Button
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: SettingsButton(),
+                ),
+                // Main content
+                Padding(
                   padding: const EdgeInsets.only(top: 70.0, left: 16.0, right: 16.0, bottom: 16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,8 +117,8 @@ class _LearnScreenState extends State<LearnScreen> with SingleTickerProviderStat
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

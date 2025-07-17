@@ -7,10 +7,15 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_sound/flutter_sound.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../widgets/settings_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../utils/session_tracker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 class TalkScreen extends StatefulWidget {
   final String profileName;
@@ -35,6 +40,9 @@ class _TalkScreenState extends State<TalkScreen> {
   double _soundWaveAmplitude = 0.0;
   late SessionTracker _tracker;
 
+  final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
+  String? _recordedPath;
+
   @override
   void initState() {
     super.initState();
@@ -49,10 +57,8 @@ class _TalkScreenState extends State<TalkScreen> {
     _tracker.start();
 
     Future.delayed(Duration(milliseconds: 500), () {
-      const greeting = "Hello! I'm your fox friend. Ask me anything!";
-      setState(() {
-        _recognizedText = greeting;
-      });
+      const greeting = "Hello! I'm your fox friend. Try saying something or say a word for me to check!";
+      setState(() => _recognizedText = greeting);
       _tts.speak(greeting);
     });
   }
@@ -62,7 +68,32 @@ class _TalkScreenState extends State<TalkScreen> {
     _tracker.end();
     _speech.stop();
     _tts.stop();
+    _recorder.closeRecorder();
     super.dispose();
+  }
+
+  Future<void> _startRecording() async {
+    var micStatus = await Permission.microphone.request();
+    if (!micStatus.isGranted) {
+      print("Microphone permission denied");
+      return;
+    }
+
+    Directory tempDir = await getTemporaryDirectory();
+    _recordedPath = '${tempDir.path}/pronunciation.wav';
+
+    await _recorder.openRecorder();
+    await _recorder.startRecorder(
+      toFile: _recordedPath,
+      codec: Codec.pcm16WAV,
+    );
+    print("Recording started at: $_recordedPath");
+  }
+
+  Future<void> _stopRecording() async {
+    await _recorder.stopRecorder();
+    await _recorder.closeRecorder();
+    print("Recording stopped");
   }
 
   void _startListening() async {
@@ -70,17 +101,34 @@ class _TalkScreenState extends State<TalkScreen> {
       onStatus: (status) => print('onStatus: $status'),
       onError: (error) => print('onError: $error'),
     );
+
+    print("Speech available: $available");
+
     if (available) {
+      await _startRecording();
+
       setState(() => _isListening = true);
       _speech.listen(
         onResult: (val) async {
+          print('Speech result: ${val.recognizedWords}');
+
           setState(() {
             _recognizedText = val.recognizedWords;
             _soundWaveAmplitude = Random().nextDouble() * 30;
           });
 
-          if (val.hasConfidenceRating && val.confidence > 0.5 && val.finalResult) {
-            await _sendToAI(_recognizedText);
+          if (val.finalResult) {
+            await _stopRecording();
+            setState(() => _isListening = false);
+
+            final regex = RegExp(r'say\s+(\w+)', caseSensitive: false);
+            final match = regex.firstMatch(val.recognizedWords);
+            if (match != null && match.groupCount > 0) {
+              String expectedWord = match.group(1)!.toLowerCase();
+              await _sendPronunciationFeedback(expectedWord);
+            } else {
+              await _sendToAI(val.recognizedWords);
+            }
           }
         },
       );
@@ -107,15 +155,49 @@ class _TalkScreenState extends State<TalkScreen> {
         final result = json.decode(response.body);
         final intent = result['intent'];
         final answer = result['answer'];
-        print("Intent: $intent");
-        print("Answer: $answer");
-
+        print("Intent: $intent, Answer: $answer");
         await _respondToAnswer(answer);
       } else {
         print('Error from server: ${response.body}');
       }
     } catch (e) {
       print('Failed to send to AI: $e');
+    }
+  }
+
+  Future<void> _sendPronunciationFeedback(String expectedWord) async {
+    if (_recordedPath == null) return;
+
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('https://digikids-ai.onrender.com/api/pronunciation-feedback'),
+    );
+    request.fields['expected'] = expectedWord;
+    request.files.add(await http.MultipartFile.fromPath('audio', _recordedPath!));
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final feedback = data['feedback'];
+      final prediction = data['prediction'];
+      final confidence = data['confidence'];
+      final spoken = data['spoken_word'];
+
+      String emoji = {
+        'correct': '🌟',
+        'almost': '👍',
+        'incorrect': '🔄',
+      }[prediction] ?? '❓';
+
+      setState(() {
+        _recognizedText = "$emoji $feedback\nWord: $spoken\nConfidence: ${confidence.toStringAsFixed(2)}";
+      });
+
+      await _tts.speak(feedback);
+    } else {
+      print("Pronunciation error: ${response.body}");
     }
   }
 
