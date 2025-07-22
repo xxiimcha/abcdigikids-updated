@@ -35,7 +35,7 @@ class _TalkScreenState extends State<TalkScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    Gemini.init(apiKey: 'AIzaSyBKOrnJJytrrY248l3kv6xUBULeID0jI0U');
+    Gemini.init(apiKey: 'AIzaSyCWIPv1M7gulQWieSKoC1qx6YZQ4IRmIaA');
     _speech = stt.SpeechToText();
     _tts = FlutterTts();
     _tts.setLanguage("en-US");
@@ -64,11 +64,11 @@ class _TalkScreenState extends State<TalkScreen> with SingleTickerProviderStateM
   }
 
   Future<void> _startListening() async {
-    if (_isSpeaking) return;
+    if (_isSpeaking || _isLoading) return;
 
     bool available = await _speech.initialize(
-      onStatus: (status) => print('Speech status: $status'),
-      onError: (error) => print('Speech error: $error'),
+      onStatus: (status) => print('Speech status: \$status'),
+      onError: (error) => print('Speech error: \$error'),
     );
 
     if (available) {
@@ -79,7 +79,7 @@ class _TalkScreenState extends State<TalkScreen> with SingleTickerProviderStateM
         listenMode: stt.ListenMode.confirmation,
         localeId: 'en_US',
         onResult: (val) async {
-          print("Speech result: ${val.recognizedWords}");
+          print("Speech result: \${val.recognizedWords}");
 
           if (val.recognizedWords.isNotEmpty) {
             setState(() {
@@ -94,7 +94,9 @@ class _TalkScreenState extends State<TalkScreen> with SingleTickerProviderStateM
       );
     } else {
       print("Speech recognition unavailable.");
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Speech recognition unavailable.")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Speech recognition unavailable.")),
+      );
     }
   }
 
@@ -102,26 +104,37 @@ class _TalkScreenState extends State<TalkScreen> with SingleTickerProviderStateM
     final childFriendlyPrompt = prompt;
 
     try {
-      final result = await Gemini.instance.text(childFriendlyPrompt);
-      final output = result?.output?.trim().isNotEmpty == true
-          ? result!.output!
-          : "No response from Gemini";
+      await Future.delayed(const Duration(seconds: 1)); // Throttle requests
 
-      print("Gemini response: $output");
+      final result = await Gemini.instance.text(childFriendlyPrompt);
+      final output = result?.output?.trim();
+      final response = (output != null && output.isNotEmpty)
+          ? output
+          : "Hmm... I didn’t catch that. Can you try again?";
+
+      print("Gemini response: \$response");
 
       setState(() {
-        _messages.add(_Message(role: 'Gemini', content: output));
+        _messages.add(_Message(role: 'Gemini', content: response));
         _isLoading = false;
         _isSpeaking = true;
         _isListening = false;
       });
 
       _micAnimationController.repeat(reverse: true);
-      await _tts.speak(output);
+      await _tts.speak(response);
     } catch (e) {
-      print("Gemini error: $e");
+      print("Gemini error: \$e");
+
+      String errorMessage;
+      if (e.toString().contains('429')) {
+        errorMessage = "Oops! I need a little break. Can you try again in a few seconds?";
+      } else {
+        errorMessage = "Hmm... Something went wrong. Let's try again.";
+      }
+
       setState(() {
-        _messages.add(_Message(role: 'Gemini', content: 'Error: ${e.toString()}'));
+        _messages.add(_Message(role: 'Gemini', content: errorMessage));
         _isLoading = false;
         _isSpeaking = false;
         _isListening = false;
@@ -191,7 +204,6 @@ class _TalkScreenState extends State<TalkScreen> with SingleTickerProviderStateM
       child: Scaffold(
         body: Stack(
           children: [
-            // Background GIF
             Positioned.fill(
               child: Image.asset(
                 'assets/backgrounds/background.gif',
@@ -199,21 +211,18 @@ class _TalkScreenState extends State<TalkScreen> with SingleTickerProviderStateM
               ),
             ),
 
-            // Overlay for readability
             Positioned.fill(
               child: Container(
                 color: Colors.black.withOpacity(0.4),
               ),
             ),
 
-            // Top settings button
             Positioned(
               top: 40,
               right: 16,
               child: SettingsButton(),
             ),
 
-            // Foreground content
             SafeArea(
               child: Column(
                 children: [
@@ -247,17 +256,16 @@ class _TalkScreenState extends State<TalkScreen> with SingleTickerProviderStateM
               ),
             ),
 
-            // Mic button centered
             Center(
               child: GestureDetector(
-                onTap: (!_isListening && !_isSpeaking) ? _startListening : null,
+                onTap: (!_isListening && !_isSpeaking && !_isLoading) ? _startListening : null,
                 child: Transform.scale(
                   scale: micScale,
                   child: Container(
                     padding: const EdgeInsets.all(48),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         colors: [Colors.redAccent, Colors.pinkAccent],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -280,7 +288,6 @@ class _TalkScreenState extends State<TalkScreen> with SingleTickerProviderStateM
       ),
     );
   }
-
 }
 
 class _Message {
